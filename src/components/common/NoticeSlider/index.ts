@@ -1,0 +1,1 @@
+export { NoticeSlider } from "./NoticeSlider";

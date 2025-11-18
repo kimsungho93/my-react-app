@@ -1,0 +1,1 @@
+export { BudgetDeductModal } from "./BudgetDeductModal";
