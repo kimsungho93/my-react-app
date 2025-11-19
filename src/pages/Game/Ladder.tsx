@@ -377,14 +377,10 @@ const Ladder = () => {
   }, [allUsers]);
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* <Typography variant="h4" fontWeight={600} sx={{ mb: 3 }}>
-        사다리 타기
-      </Typography> */}
-
-      <Stack spacing={3}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Stack spacing={2}>
         {/* 설정 영역 */}
-        <Paper elevation={2} sx={{ p: 3 }}>
+        <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 } }}>
           <Stack spacing={2}>
             {/* 참가자 목록 */}
             <Box>
@@ -394,25 +390,42 @@ const Ladder = () => {
                   justifyContent: "space-between",
                   alignItems: "center",
                   mb: 1,
+                  gap: 1,
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={600}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  sx={{ fontSize: "0.95rem", whiteSpace: "nowrap" }}
+                >
                   참가자 ({participants.length}명)
                 </Typography>
-                <Box sx={{ display: "flex", gap: 1 }}>
+                <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
                   <Button
                     size="small"
                     variant="outlined"
                     onClick={handleRestoreAll}
                     disabled={isPlaying}
+                    sx={{
+                      fontSize: "0.75rem",
+                      py: 0.5,
+                      px: 1,
+                      minWidth: "auto",
+                    }}
                   >
-                    전체 복원
+                    전체복원
                   </Button>
                   <Button
                     size="small"
                     variant="outlined"
                     onClick={fetchUsers}
                     disabled={isPlaying}
+                    sx={{
+                      fontSize: "0.75rem",
+                      py: 0.5,
+                      px: 1,
+                      minWidth: "auto",
+                    }}
                   >
                     새로고침
                   </Button>
@@ -509,14 +522,14 @@ const Ladder = () => {
 
         {/* 사다리 영역 */}
         {participants.length > 1 && (
-          <Paper elevation={2} sx={{ p: 2, overflow: "hidden" }}>
+          <Paper elevation={2} sx={{ p: 2, overflow: "auto" }}>
             <Box
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                minWidth: `${Math.max(320, participants.length * 60)}px`,
                 width: "100%",
-                maxWidth: "100%",
               }}
             >
               {/* 시작 이름 */}
@@ -549,15 +562,13 @@ const Ladder = () => {
                         sx={{
                           textAlign: "center",
                           fontWeight: 600,
-                          fontSize: "0.875rem",
+                          fontSize: "0.8rem",
                           color: highlightedPaths.has(`v-0-${idx}`)
                             ? "primary.main"
                             : "text.primary",
                           transition: "color 0.3s ease",
                           whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          px: 0.5,
+                          px: 0.25,
                         }}
                       >
                         {user}
@@ -749,13 +760,13 @@ const Ladder = () => {
                               sx={{
                                 textAlign: "center",
                                 fontWeight: 700,
-                                fontSize: "0.875rem",
+                                fontSize: "0.75rem",
                                 color: isWinner ? "success.main" : "error.main",
                                 bgcolor: isWinner
                                   ? "success.light"
                                   : "error.light",
-                                py: 0.5,
-                                px: 1,
+                                py: 0.4,
+                                px: 0.8,
                                 borderRadius: 1.5,
                                 border: 2,
                                 borderColor: isWinner
@@ -789,13 +800,17 @@ const Ladder = () => {
               <Paper
                 elevation={2}
                 sx={{
-                  p: 3,
+                  p: { xs: 2, sm: 3 },
                   bgcolor: "success.light",
                   borderLeft: 4,
                   borderColor: "success.main",
                 }}
               >
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  sx={{ mb: 2, fontSize: { xs: "1rem", sm: "1.25rem" } }}
+                >
                   🎉 당첨자 발표
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
