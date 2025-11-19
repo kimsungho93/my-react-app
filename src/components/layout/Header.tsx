@@ -5,7 +5,6 @@ import {
   Toolbar,
   IconButton,
   Box,
-  Tooltip,
   Avatar,
   Menu,
   MenuItem,
@@ -14,8 +13,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  ViewWeek,
-  ViewSidebar,
   Logout,
   Settings,
   Person,
@@ -23,7 +20,7 @@ import {
   DarkMode,
 } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";
-import { toggleCollapse, setDirection } from "../../store/slices/layoutSlice";
+import { toggleCollapse } from "../../store/slices/layoutSlice";
 import { toggleTheme } from "../../store/slices/themeSlice";
 import { logout } from "../../store/slices/authSlice";
 
@@ -34,18 +31,10 @@ import { logout } from "../../store/slices/authSlice";
 export const Header = React.memo(() => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { direction, collapsed } = useAppSelector((state) => state.layout);
   const { mode } = useAppSelector((state) => state.theme);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  const isVertical = direction === "vertical";
   const isDark = mode === "dark";
-
-  // 레이아웃 방향 토글
-  const handleLayoutToggle = useCallback(
-    () => dispatch(setDirection(isVertical ? "horizontal" : "vertical")),
-    [dispatch, isVertical]
-  );
 
   // 사이드바 접기/펼치기
   const handleCollapseToggle = useCallback(
