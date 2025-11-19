@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import { Box, Chip, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -9,34 +9,10 @@ interface ParticipantListProps {
 
 /**
  * 참가자 목록 컴포넌트
- * 드래그로 참가자를 제거할 수 있는 기능 제공
+ * X 버튼 클릭으로 참가자를 제거할 수 있는 기능 제공
  */
 const ParticipantList: React.FC<ParticipantListProps> = React.memo(
   ({ participants, onRemove }) => {
-    const [draggedItem, setDraggedItem] = useState<string | null>(null);
-
-    /** 드래그 시작 핸들러 */
-    const handleDragStart = useCallback(
-      (e: React.DragEvent, name: string) => {
-        setDraggedItem(name);
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", name);
-
-        // 드래그 이미지 커스터마이징
-        const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
-        dragImage.style.opacity = "0.5";
-        document.body.appendChild(dragImage);
-        e.dataTransfer.setDragImage(dragImage, 0, 0);
-        setTimeout(() => document.body.removeChild(dragImage), 0);
-      },
-      []
-    );
-
-    /** 드래그 종료 핸들러 */
-    const handleDragEnd = useCallback(() => {
-      setDraggedItem(null);
-    }, []);
-
     /** 칩 삭제 핸들러 */
     const handleDelete = useCallback(
       (name: string) => {
@@ -91,16 +67,8 @@ const ParticipantList: React.FC<ParticipantListProps> = React.memo(
               label={name}
               onDelete={() => handleDelete(name)}
               deleteIcon={<CloseIcon />}
-              draggable
-              onDragStart={(e) => handleDragStart(e, name)}
-              onDragEnd={handleDragEnd}
               sx={{
-                cursor: "grab",
-                opacity: draggedItem === name ? 0.5 : 1,
                 transition: "all 0.2s ease",
-                "&:active": {
-                  cursor: "grabbing",
-                },
                 "&:hover": {
                   transform: "scale(1.05)",
                   boxShadow: 2,
@@ -116,7 +84,7 @@ const ParticipantList: React.FC<ParticipantListProps> = React.memo(
           variant="caption"
           sx={{ display: "block", mt: 2, color: "text.secondary" }}
         >
-          💡 참가자를 드래그하거나 X를 클릭해서 제거할 수 있습니다
+          💡 X 버튼을 클릭해서 참가자를 제거할 수 있습니다
         </Typography>
       </Box>
     );

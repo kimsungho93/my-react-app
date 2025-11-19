@@ -180,177 +180,244 @@ const Roulette: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box
+      sx={{
+        p: { xs: 1.5, sm: 2, md: 3 },
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        gap: { xs: 2, sm: 2.5, md: 3 },
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{
+          fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
+          textAlign: "center",
+          mb: 0,
+        }}
+      >
         🎯 3D 룰렛 게임
       </Typography>
 
-      <Box sx={{ display: "flex", gap: 3, height: 600 }}>
-        {/* 3D 룰렛 영역 */}
-        <Paper
-          elevation={3}
-          sx={{
-            flex: 2,
+      {/* 상단: 참가자 목록 및 컨트롤 버튼 */}
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, sm: 2.5, md: 3 },
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontSize: { xs: "1rem", sm: "1.125rem", md: "1.25rem" } }}
+        >
+          참가자 목록 ({participants.length}명)
+        </Typography>
+
+        {/* 참가자 리스트 */}
+        <ParticipantList
+          participants={participants}
+          onRemove={handleRemoveParticipant}
+        />
+
+        {/* 컨트롤 버튼 */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 1.5, sm: 2 }}
+          sx={{ mt: 2 }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleSpin}
+            disabled={spinDisabled}
+            fullWidth
+            sx={{
+              py: { xs: 1.5, sm: 2 },
+              px: { xs: 0.5, sm: 2 },
+              minHeight: { xs: "48px", sm: "56px" },
+              whiteSpace: "nowrap",
+              "& .MuiButton-label, &": {
+                fontSize: { xs: "0.65rem !important", sm: "0.875rem", md: "1rem" },
+              },
+            }}
+          >
+            🎰 룰렛 돌리기
+          </Button>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            onClick={handleThrowDart}
+            disabled={dartDisabled}
+            fullWidth
+            sx={{
+              py: { xs: 1.5, sm: 2 },
+              px: { xs: 0.5, sm: 2 },
+              minHeight: { xs: "48px", sm: "56px" },
+              whiteSpace: "nowrap",
+              "& .MuiButton-label, &": {
+                fontSize: { xs: "0.65rem !important", sm: "0.875rem", md: "1rem" },
+              },
+            }}
+          >
+            🎯 다트 던지기
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="info"
+            size="small"
+            onClick={handleReset}
+            disabled={!dartFired && !winner}
+            fullWidth
+            sx={{
+              py: { xs: 1.5, sm: 2 },
+              px: { xs: 0.5, sm: 2 },
+              minHeight: { xs: "48px", sm: "56px" },
+              whiteSpace: "nowrap",
+              "& .MuiButton-label, &": {
+                fontSize: { xs: "0.65rem !important", sm: "0.875rem", md: "1rem" },
+              },
+            }}
+          >
+            🔄 리셋
+          </Button>
+        </Stack>
+
+        {participants.length === 0 && (
+          <Typography
+            variant="body2"
+            color="error"
+            sx={{
+              mt: 2,
+              textAlign: "center",
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+            }}
+          >
+            참가자가 없습니다!
+          </Typography>
+        )}
+
+        {/* 당첨자 결과 */}
+        {winner && (
+          <Paper
+            elevation={3}
+            sx={{
+              mt: 2,
+              py: { xs: 1.5, sm: 2 },
+              px: 2,
+              textAlign: "center",
+              bgcolor: "success.light",
+              borderLeft: 6,
+              borderColor: "success.main",
+              animation: "fadeInUp 0.5s ease-in-out",
+              "@keyframes fadeInUp": {
+                from: { opacity: 0, transform: "translateY(20px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                mb: 0.5,
+                fontSize: { xs: "1rem", sm: "1.125rem", md: "1.25rem" },
+              }}
+            >
+              🎉 당첨자 발표!
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: "bold",
+                color: "success.dark",
+                textShadow: "2px 2px 4px rgba(0,0,0,0.1)",
+                fontSize: { xs: "1.25rem", sm: "1.5rem", md: "1.5rem" },
+              }}
+            >
+              {winner}
+            </Typography>
+          </Paper>
+        )}
+      </Paper>
+
+      {/* 하단: 3D 룰렛 영역 */}
+      <Paper
+        elevation={3}
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: 2,
+          zIndex: 0,
+          height: { xs: "400px", sm: "500px", md: "600px" },
+          flexShrink: 0,
+        }}
+      >
+        <Canvas
+          shadows
+          camera={{ position: [0, 5, 8], fov: 50 }}
+          style={{
+            background: "linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)",
             position: "relative",
-            overflow: "hidden",
-            borderRadius: 2,
             zIndex: 0,
           }}
         >
-          <Canvas
-            shadows
-            camera={{ position: [0, 3, 5], fov: 50 }}
-            style={{
-              background:
-                "linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)",
-              position: "relative",
-              zIndex: 0,
-            }}
-          >
-            <OrbitControls
-              enableZoom={true}
-              enablePan={false}
-              minPolarAngle={Math.PI / 4}
-              maxPolarAngle={Math.PI / 2}
-              target={[0, 0, 0]}
-            />
-
-            {/* 조명 */}
-            <ambientLight intensity={0.7} />
-            <directionalLight
-              position={[5, 10, 5]}
-              intensity={1.5}
-              castShadow
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
-            />
-            <spotLight
-              position={[0, 10, 0]}
-              angle={0.4}
-              penumbra={1}
-              intensity={1}
-              castShadow
-            />
-            <hemisphereLight intensity={0.3} />
-
-            {/* 룰렛 휠 */}
-            <RouletteWheel
-              participants={participants}
-              rotation={rotation}
-              isSpinning={isSpinning}
-            />
-
-            {/* 다트 */}
-            <Dart fired={dartFired} />
-
-            {/* 바닥 그림자 */}
-            <mesh
-              rotation={[-Math.PI / 2, 0, 0]}
-              position={[0, -0.5, 0]}
-              receiveShadow
-            >
-              <planeGeometry args={[20, 20]} />
-              <shadowMaterial opacity={0.3} />
-            </mesh>
-          </Canvas>
-        </Paper>
-
-        {/* 컨트롤 패널 */}
-        <Paper
-          elevation={3}
-          sx={{ flex: 1, p: 3, display: "flex", flexDirection: "column" }}
-        >
-          <Typography variant="h6" gutterBottom>
-            참가자 목록 ({participants.length}명)
-          </Typography>
-
-          {/* 참가자 리스트 */}
-          <ParticipantList
-            participants={participants}
-            onRemove={handleRemoveParticipant}
+          <OrbitControls
+            enableZoom={true}
+            enablePan={false}
+            minPolarAngle={Math.PI / 4}
+            maxPolarAngle={Math.PI / 2}
+            target={[0, 0, 0]}
+            minDistance={5}
+            maxDistance={15}
           />
 
-          {/* 컨트롤 버튼 */}
-          <Stack spacing={2} sx={{ mt: "auto" }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={handleSpin}
-              disabled={spinDisabled}
-              fullWidth
-            >
-              🎰 룰렛 돌리기
-            </Button>
+          {/* 조명 */}
+          <ambientLight intensity={0.7} />
+          <directionalLight
+            position={[5, 10, 5]}
+            intensity={1.5}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          <spotLight
+            position={[0, 10, 0]}
+            angle={0.4}
+            penumbra={1}
+            intensity={1}
+            castShadow
+          />
+          <hemisphereLight intensity={0.3} />
 
-            <Button
-              variant="contained"
-              color="secondary"
-              size="large"
-              onClick={handleThrowDart}
-              disabled={dartDisabled}
-              fullWidth
-            >
-              🎯 다트 던지기
-            </Button>
+          {/* 룰렛 휠 */}
+          <RouletteWheel
+            participants={participants}
+            rotation={rotation}
+            isSpinning={isSpinning}
+          />
 
-            <Button
-              variant="outlined"
-              color="info"
-              onClick={handleReset}
-              disabled={!dartFired && !winner}
-              fullWidth
-            >
-              🔄 리셋
-            </Button>
-          </Stack>
+          {/* 다트 */}
+          <Dart fired={dartFired} />
 
-          {participants.length === 0 && (
-            <Typography
-              variant="body2"
-              color="error"
-              sx={{ mt: 2, textAlign: "center" }}
-            >
-              참가자가 없습니다!
-            </Typography>
-          )}
-        </Paper>
-      </Box>
-
-      {/* 당첨자 결과 - 하단 표시 */}
-      {winner && (
-        <Paper
-          elevation={3}
-          sx={{
-            mt: 1.5,
-            py: 1,
-            px: 2,
-            textAlign: "center",
-            bgcolor: "success.light",
-            borderLeft: 6,
-            borderColor: "success.main",
-            animation: "fadeInUp 0.5s ease-in-out",
-            "@keyframes fadeInUp": {
-              from: { opacity: 0, transform: "translateY(20px)" },
-              to: { opacity: 1, transform: "translateY(0)" },
-            },
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: "bold", mb: 0.5 }}>
-            🎉 당첨자 발표!
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: "bold",
-              color: "success.dark",
-              textShadow: "2px 2px 4px rgba(0,0,0,0.1)",
-            }}
+          {/* 바닥 그림자 */}
+          <mesh
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={[0, -0.5, 0]}
+            receiveShadow
           >
-            {winner}
-          </Typography>
-        </Paper>
-      )}
+            <planeGeometry args={[20, 20]} />
+            <shadowMaterial opacity={0.3} />
+          </mesh>
+        </Canvas>
+      </Paper>
     </Box>
   );
 };
