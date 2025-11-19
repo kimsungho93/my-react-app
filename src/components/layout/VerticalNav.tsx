@@ -160,11 +160,13 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
         }}
         sx={{
           display: "block", // 모바일 전용으로 항상 표시
+          zIndex: (theme) => theme.zIndex.drawer + 1,
           "& .MuiDrawer-paper": {
             width: drawerWidth, // 모바일에서는 항상 펼쳐진 상태
             maxWidth: "80vw", // 화면의 80% 이하
             boxSizing: "border-box",
             overflowX: "hidden",
+            zIndex: (theme) => theme.zIndex.drawer + 1,
           },
         }}
       >

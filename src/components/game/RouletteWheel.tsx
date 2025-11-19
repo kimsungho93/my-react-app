@@ -116,6 +116,7 @@ const RouletteWheel: React.FC<RouletteWheelProps> = React.memo(
               center
               transform
               sprite
+              zIndexRange={[0, 0]}
             >
               <div
                 style={{

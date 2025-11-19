@@ -194,6 +194,7 @@ const Roulette: React.FC = () => {
             position: "relative",
             overflow: "hidden",
             borderRadius: 2,
+            zIndex: 0,
           }}
         >
           <Canvas
@@ -202,6 +203,8 @@ const Roulette: React.FC = () => {
             style={{
               background:
                 "linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)",
+              position: "relative",
+              zIndex: 0,
             }}
           >
             <OrbitControls
