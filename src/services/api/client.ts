@@ -9,6 +9,14 @@ import type { RefreshTokenResponse } from "../../types/auth.types";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
+// 개발 환경에서 디버깅용 로그
+if (import.meta.env.DEV) {
+  console.log('🔧 API Configuration:');
+  console.log('  - VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+  console.log('  - API_BASE_URL:', API_BASE_URL);
+  console.log('  - Mode:', import.meta.env.MODE);
+}
+
 /**
  * Axios 인스턴스 생성
  */

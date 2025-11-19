@@ -206,6 +206,8 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  FormControlLabel,
+  Checkbox,
   keyframes,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Lock, Email } from "@mui/icons-material";
@@ -259,6 +261,8 @@ const generateStars = (count: number, size: number) => {
   return stars;
 };
 
+const REMEMBER_EMAIL_KEY = "rememberedEmail";
+
 /**
  * 로그인 페이지
  */
@@ -272,10 +276,20 @@ export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
 
   // 비밀번호 유효성 검사 추가
   const isPasswordValid = password.length >= 8 && password.length <= 20;
   const isFormValid = email && isPasswordValid;
+
+  // 저장된 이메일 불러오기
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberEmail(true);
+    }
+  }, []);
 
   // 이미 로그인된 경우 대시보드로 리다이렉트
   useEffect(() => {
@@ -299,6 +313,13 @@ export const Login = () => {
 
     if (!email || !password) {
       return;
+    }
+
+    // 이메일 기억하기 처리
+    if (rememberEmail) {
+      localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+    } else {
+      localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
 
     const result = await dispatch(login({ email, password }));
@@ -461,12 +482,13 @@ export const Login = () => {
         sx={{
           position: "relative",
           zIndex: 1,
+          px: 2, // 모바일: 좌우 패딩 축소
         }}
       >
         <Paper
           elevation={24}
           sx={{
-            p: 4,
+            p: 3, // 모바일: 패딩 축소
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -645,6 +667,39 @@ export const Login = () => {
                 },
               }}
             />
+
+            {/* 이메일 기억하기 체크박스 */}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberEmail}
+                  onChange={(e) => setRememberEmail(e.target.checked)}
+                  sx={{
+                    color: "rgba(0, 0, 0, 0.6)",
+                    "&.Mui-checked": {
+                      color: "#667eea",
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "rgba(0, 0, 0, 0.7)",
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  이메일 저장
+                </Typography>
+              }
+              sx={{
+                mt: 1,
+                mb: 0,
+                userSelect: "none",
+              }}
+            />
+
             {/* 로그인 버튼 */}
             <Button
               type="submit"

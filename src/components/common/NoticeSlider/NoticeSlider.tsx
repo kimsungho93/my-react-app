@@ -59,45 +59,58 @@ export const NoticeSlider = React.memo<NoticeSliderProps>(
       <Paper
         elevation={2}
         sx={{
-          p: 3,
+          p: 2,
           display: "flex",
-          alignItems: "center",
-          gap: 2,
+          flexDirection: "column",
+          gap: 1.5,
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* 공지사항 아이콘 */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            bgcolor: `${priorityColor[currentNotice.priority]}15`,
-          }}
-        >
-          <Notifications
-            sx={{ color: priorityColor[currentNotice.priority] }}
-          />
-        </Box>
-
-        {/* 공지사항 내용 */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* 헤더: 아이콘 + 제목 */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              bgcolor: `${priorityColor[currentNotice.priority]}15`,
+              flexShrink: 0,
+            }}
+          >
+            <Notifications
+              sx={{
+                color: priorityColor[currentNotice.priority],
+                fontSize: 20,
+              }}
+            />
+          </Box>
           <Typography
             variant="subtitle1"
             fontWeight={600}
-            noWrap
-            sx={{ mb: 0.5 }}
+            sx={{
+              flex: 1,
+              fontSize: "0.95rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
             {currentNotice.title}
           </Typography>
+        </Box>
+
+        {/* 공지사항 내용 */}
+        <Box sx={{ px: 0.5 }}>
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{
+              fontSize: "0.875rem",
+              lineHeight: 1.6,
               overflow: "hidden",
               textOverflow: "ellipsis",
               display: "-webkit-box",
@@ -111,14 +124,50 @@ export const NoticeSlider = React.memo<NoticeSliderProps>(
 
         {/* 네비게이션 버튼 */}
         {notices.length > 1 && (
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <IconButton onClick={handlePrev} size="small">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              pt: 1,
+              borderTop: 1,
+              borderColor: "divider",
+            }}
+          >
+            <IconButton
+              onClick={handlePrev}
+              size="medium"
+              sx={{
+                bgcolor: "action.hover",
+                "&:hover": {
+                  bgcolor: "action.selected",
+                },
+                width: 44,
+                height: 44,
+              }}
+            >
               <ChevronLeft />
             </IconButton>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight={500}
+              sx={{ fontSize: "0.875rem" }}
+            >
               {currentIndex + 1} / {notices.length}
             </Typography>
-            <IconButton onClick={handleNext} size="small">
+            <IconButton
+              onClick={handleNext}
+              size="medium"
+              sx={{
+                bgcolor: "action.hover",
+                "&:hover": {
+                  bgcolor: "action.selected",
+                },
+                width: 44,
+                height: 44,
+              }}
+            >
               <ChevronRight />
             </IconButton>
           </Box>

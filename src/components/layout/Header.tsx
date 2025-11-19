@@ -94,77 +94,68 @@ export const Header = React.memo(() => {
         backgroundColor: "background.paper",
         borderBottom: 1,
         borderColor: "divider",
+        // 모바일 전용 높이
+        height: 56,
       }}
     >
-      <Toolbar sx={{ gap: 1 }}>
-        {/* 수직 레이아웃 메뉴 토글 버튼 */}
-        {isVertical && (
-          <Tooltip title={collapsed ? "메뉴 펼치기" : "메뉴 접기"}>
-            <IconButton
-              edge="start"
-              onClick={handleCollapseToggle}
-              size="medium"
-              sx={{
-                "&:hover": {
-                  backgroundColor: "action.hover",
-                },
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+      <Toolbar
+        sx={{
+          gap: 1,
+          minHeight: "56px !important", // 모바일 전용 높이
+          px: 2, // 좌우 패딩 축소
+        }}
+      >
+        {/* 모바일 메뉴 토글 버튼 (항상 표시) */}
+        <IconButton
+          edge="start"
+          onClick={handleCollapseToggle}
+          size="medium"
+          sx={{
+            p: 1, // 패딩 축소
+            "&:hover": {
+              backgroundColor: "action.hover",
+            },
+          }}
+          aria-label="메뉴"
+        >
+          <MenuIcon />
+        </IconButton>
 
         <Box sx={{ flexGrow: 1 }} />
 
         {/* 우측 아이콘 버튼 그룹 */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {/* 레이아웃 방향 토글 */}
-          <Tooltip title={isVertical ? "가로 메뉴로 전환" : "세로 메뉴로 전환"}>
-            <IconButton
-              onClick={handleLayoutToggle}
-              size="medium"
-              sx={{
-                "&:hover": {
-                  backgroundColor: "action.hover",
-                },
-              }}
-            >
-              {isVertical ? <ViewWeek /> : <ViewSidebar />}
-            </IconButton>
-          </Tooltip>
-
           {/* 테마 모드 토글 */}
-          <Tooltip title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}>
-            <IconButton
-              onClick={handleThemeToggle}
-              size="medium"
-              sx={{
-                "&:hover": {
-                  backgroundColor: "action.hover",
-                },
-              }}
-            >
-              {isDark ? <LightMode /> : <DarkMode />}
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            onClick={handleThemeToggle}
+            size="medium"
+            sx={{
+              p: 1, // 패딩 축소
+              "&:hover": {
+                backgroundColor: "action.hover",
+              },
+            }}
+            aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+          >
+            {isDark ? <LightMode /> : <DarkMode />}
+          </IconButton>
 
           {/* 사용자 프로필 */}
-          <Tooltip title="계정 설정">
-            <IconButton
-              onClick={handleUserMenuOpen}
-              size="medium"
-              sx={{
-                "&:hover": {
-                  backgroundColor: "action.hover",
-                },
-              }}
-            >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
-                U
-              </Avatar>
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            onClick={handleUserMenuOpen}
+            size="medium"
+            sx={{
+              p: 1, // 패딩 축소
+              "&:hover": {
+                backgroundColor: "action.hover",
+              },
+            }}
+            aria-label="계정 설정"
+          >
+            <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.main", fontSize: "0.875rem" }}>
+              U
+            </Avatar>
+          </IconButton>
         </Box>
 
         {/* 사용자 메뉴 */}
@@ -177,11 +168,12 @@ export const Header = React.memo(() => {
           PaperProps={{
             elevation: 3,
             sx: {
-              minWidth: 200,
-              mt: 1.5,
+              minWidth: 180, // 모바일 메뉴 너비 축소
+              mt: 1,
               "& .MuiMenuItem-root": {
                 px: 2,
-                py: 1.5,
+                py: 1.25, // 모바일 패딩 축소
+                fontSize: "0.875rem", // 폰트 크기 축소
               },
             },
           }}

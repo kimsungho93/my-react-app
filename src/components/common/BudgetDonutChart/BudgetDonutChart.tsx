@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import type { DepartmentBudget } from "../../../types/dashboard.types";
@@ -16,6 +16,9 @@ interface BudgetDonutChartProps {
  */
 export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
   ({ data, onDoubleClick }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === "dark";
+
     // ECharts 옵션 메모이제이션
     const chartOption = useMemo<EChartsOption>(() => {
       if (!data) return {};
@@ -33,48 +36,61 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
         },
         legend: {
           orient: "horizontal",
-          bottom: "0%",
+          bottom: "2%",
           left: "center",
+          textStyle: {
+            fontSize: 11,
+            color: isDarkMode ? "#E0E0E0" : "#666",
+          },
+          itemGap: 16,
+        },
+        title: {
+          text: "SI 사업부",
+          left: "center",
+          top: "8%",
+          textStyle: {
+            fontSize: 15,
+            fontWeight: "bold",
+            color: isDarkMode ? "#FFFFFF" : "#333",
+          },
         },
         series: [
           {
             name: "회식비",
             type: "pie",
-            radius: ["45%", "70%"],
+            radius: ["48%", "85%"],
+            center: ["50%", "48%"],
             avoidLabelOverlap: false,
             itemStyle: {
-              borderRadius: 10,
-              borderColor: "#fff",
+              borderRadius: 8,
+              borderColor: isDarkMode ? "#424242" : "#fff",
               borderWidth: 2,
             },
             label: {
               show: true,
               position: "center",
               formatter: () => {
-                return `{a|SI 사업부}\n{b|${data.year}년 ${data.month}월}\n{c|${usedPercent}% 사용}`;
+                return `{b|${data.year}년 ${data.month}월}\n{c|${usedPercent}% 사용}`;
               },
               rich: {
-                a: {
-                  fontSize: 16,
-                  fontWeight: "bold",
-                  lineHeight: 24,
-                },
                 b: {
                   fontSize: 13,
-                  color: "#999",
+                  color: isDarkMode ? "#B0B0B0" : "#999",
                   lineHeight: 20,
+                  fontWeight: 500,
                 },
                 c: {
                   fontSize: 14,
-                  color: "#666",
-                  lineHeight: 20,
+                  color: isDarkMode ? "#FFFFFF" : "#333",
+                  lineHeight: 22,
+                  fontWeight: 600,
                 },
               },
             },
             emphasis: {
               label: {
                 show: true,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: "bold",
               },
             },
@@ -100,7 +116,7 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
           },
         ],
       };
-    }, [data]);
+    }, [data, isDarkMode]);
 
     if (!data) {
       return (
@@ -123,7 +139,7 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
         }}
       >
         {/* 차트 */}
-        <Box sx={{ flex: 1, minHeight: 0 }}>
+        <Box sx={{ height: 400, mb: 1 }}>
           <ReactECharts
             option={chartOption}
             style={{ height: "100%", width: "100%" }}
@@ -132,7 +148,7 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
         </Box>
 
         {/* 상세 정보 */}
-        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider" }}>
           <Box
             sx={{
               display: "flex",

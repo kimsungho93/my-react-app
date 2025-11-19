@@ -21,6 +21,7 @@ import { toggleMenu } from "../../store/slices/layoutSlice";
 interface VerticalNavProps {
   collapsed: boolean;
   drawerWidth: number;
+  onClose?: () => void; // 모바일에서 드로어 닫기 콜백
 }
 
 /**
@@ -28,7 +29,7 @@ interface VerticalNavProps {
  * 계층적 메뉴 구조를 지원하며 접기/펼치기 기능 제공
  */
 export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
-  ({ collapsed, drawerWidth }) => {
+  ({ collapsed, drawerWidth, onClose }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
@@ -48,6 +49,7 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
 
     /**
      * 메뉴 클릭 핸들러
+     * 모바일에서는 메뉴 선택 후 드로어 자동 닫기
      */
     const handleMenuClick = useCallback(
       (item: MenuItem) => {
@@ -55,9 +57,11 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
           handleToggle(item.id);
         } else if (item.path) {
           navigate(item.path);
+          // 모바일에서 메뉴 선택 후 드로어 닫기
+          onClose?.();
         }
       },
-      [handleToggle, navigate]
+      [handleToggle, navigate, onClose]
     );
 
     /**
@@ -85,10 +89,10 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             disabled={item.disabled}
             selected={active}
             sx={{
-              pl: 2 + depth * 2,
-              minHeight: 48,
-              justifyContent: collapsed ? "center" : "flex-start",
-              px: 2.5,
+              pl: 2 + depth * 1.5, // 모바일에서 depth 패딩 축소
+              minHeight: 44, // 모바일 터치 타겟 크기
+              justifyContent: "flex-start",
+              px: 2,
               "&.Mui-selected": {
                 backgroundColor: "primary.light",
                 "&:hover": {
@@ -101,7 +105,7 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: collapsed ? 0 : 2,
+                  mr: 2, // 모바일에서 항상 마진 적용
                   justifyContent: "center",
                   color: active ? "primary.main" : "inherit",
                 }}
@@ -116,33 +120,23 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
               </ListItemIcon>
             )}
 
-            {!collapsed && (
-              <>
-                <ListItemText
-                  primary={item.title}
-                  primaryTypographyProps={{
-                    fontSize: 14,
-                    fontWeight: active ? 600 : 400,
-                  }}
-                />
-                {hasChildren && (isOpen ? <ExpandLess /> : <ExpandMore />)}
-              </>
-            )}
+            <ListItemText
+              primary={item.title}
+              primaryTypographyProps={{
+                fontSize: "0.875rem", // 모바일 폰트 크기
+                fontWeight: active ? 600 : 400,
+              }}
+            />
+            {hasChildren && (isOpen ? <ExpandLess /> : <ExpandMore />)}
           </ListItemButton>
         );
 
         return (
           <React.Fragment key={item.id}>
-            {collapsed && item.icon ? (
-              <Tooltip title={item.title} placement="right">
-                {menuButton}
-              </Tooltip>
-            ) : (
-              menuButton
-            )}
+            {menuButton}
 
-            {/* 하위 메뉴 렌더링 */}
-            {hasChildren && !collapsed && (
+            {/* 하위 메뉴 렌더링 (모바일에서 항상 표시) */}
+            {hasChildren && (
               <Collapse in={isOpen} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   {item.children!.map((child) =>
@@ -159,18 +153,18 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
 
     return (
       <Drawer
-        variant="permanent"
+        variant="temporary" // 모바일 전용: 임시 드로어
+        open={!collapsed} // collapsed가 false일 때 드로어 열림
+        onClose={onClose} // 백드롭 클릭 시 닫기
+        ModalProps={{
+          keepMounted: true, // 모바일 성능 최적화
+        }}
         sx={{
-          width: collapsed ? 64 : drawerWidth,
-          flexShrink: 0,
+          display: "block", // 모바일 전용으로 항상 표시
           "& .MuiDrawer-paper": {
-            width: collapsed ? 64 : drawerWidth,
+            width: drawerWidth, // 모바일에서는 항상 펼쳐진 상태
+            maxWidth: "80vw", // 화면의 80% 이하
             boxSizing: "border-box",
-            transition: (theme) =>
-              theme.transitions.create("width", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
             overflowX: "hidden",
           },
         }}
@@ -181,25 +175,19 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            height: 64,
+            height: 56, // 모바일 헤더 높이와 동일
             px: 2,
           }}
         >
-          {collapsed ? (
-            <Box component="span" sx={{ fontSize: 24, fontWeight: 700 }}>
-              L
-            </Box>
-          ) : (
-            <Box component="span" sx={{ fontSize: 20, fontWeight: 700 }}>
-              LOGO
-            </Box>
-          )}
+          <Box component="span" sx={{ fontSize: 18, fontWeight: 700 }}>
+            LOGO
+          </Box>
         </Box>
 
         <Divider />
 
         {/* 메뉴 리스트 */}
-        <List sx={{ pt: 1 }}>
+        <List sx={{ pt: 1, pb: 2 }}>
           {MENU_DATA.map((item) => renderMenuItem(item))}
         </List>
       </Drawer>

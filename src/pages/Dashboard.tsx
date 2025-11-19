@@ -158,19 +158,20 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack spacing={3}>
+    <Box sx={{ p: 0 }}>
+      {/* 모바일 전용: padding 제거 */}
+      <Stack spacing={2}>
         {/* 상단: 공지사항 슬라이더 */}
         <NoticeSlider notices={mockNotices} />
 
         {/* 중단: 부서 회식비 차트 & 캘린더 */}
         <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={3}
-          sx={{ height: 450 }}
+          direction="column" // 모바일: 항상 세로 방향
+          spacing={2}
+          sx={{ height: "auto" }} // 모바일: 자동 높이
         >
-          {/* 좌측: 부서 회식비 차트 */}
-          <Box sx={{ width: { xs: "100%", md: "33.33%" }, height: "100%" }}>
+          {/* 부서 회식비 차트 */}
+          <Box sx={{ width: "100%", minHeight: 350 }}> {/* 모바일: 전체 너비, 최소 높이 */}
             {loading ? (
               <Paper
                 elevation={2}
@@ -233,18 +234,19 @@ const Dashboard = () => {
                     mb: 2,
                   }}
                 >
-                  <Typography variant="h6" fontWeight={600}>
+                  <Typography variant="h6" fontWeight={600} sx={{ fontSize: "1rem" }}>
                     부서 회식비
                   </Typography>
                   <Button
                     variant="contained"
                     size="small"
-                    startIcon={<AddIcon />}
+                    startIcon={<AddIcon sx={{ fontSize: "1rem" }} />}
                     onClick={handleDeductButtonClick}
                     sx={{
-                      fontSize: "0.875rem",
+                      fontSize: "0.75rem", // 모바일: 폰트 크기 축소
                       py: 0.5,
-                      px: 1.5,
+                      px: 1.25, // 모바일: 좌우 패딩 축소
+                      minHeight: 32, // 모바일: 버튼 높이 축소
                     }}
                   >
                     사용 입력
@@ -294,8 +296,8 @@ const Dashboard = () => {
             )}
           </Box>
 
-          {/* 우측: 캘린더 */}
-          <Box sx={{ width: { xs: "100%", md: "66.67%" }, height: "100%" }}>
+          {/* 캘린더 */}
+          <Box sx={{ width: "100%", minHeight: 400 }}> {/* 모바일: 전체 너비, 최소 높이 */}
             <DashboardCalendar
               events={mockEvents}
               onSelectEvent={handleSelectEvent}
