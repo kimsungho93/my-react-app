@@ -1,12 +1,14 @@
 import {
   Dashboard,
   Settings,
-  BarChart,
-  Assessment,
   AccountCircle,
   Security,
   Notifications,
   SportsEsports,
+  ContactSupport,
+  Feedback,
+  QuestionAnswer,
+  List,
 } from "@mui/icons-material";
 import type { MenuItem } from "../types/menu.types";
 
@@ -59,20 +61,28 @@ export const MENU_DATA: MenuItem[] = [
     ],
   },
   {
-    id: "analytics",
-    title: "분석",
-    icon: BarChart,
+    id: "customer-service",
+    title: "고객센터",
+    icon: ContactSupport,
     children: [
       {
-        id: "analytics-sales",
-        title: "매출 분석",
-        icon: Assessment,
-        path: "/analytics/sales",
-      },
-      {
-        id: "analytics-reports",
-        title: "리포트",
-        path: "/analytics/reports",
+        id: "customer-service-suggestions",
+        title: "건의/문의",
+        icon: QuestionAnswer,
+        children: [
+          {
+            id: "customer-service-suggestion-list",
+            title: "건의사항 조회",
+            icon: List,
+            path: "/customer-service/suggestions",
+          },
+          {
+            id: "customer-service-create-suggestion",
+            title: "건의하기",
+            icon: Feedback,
+            path: "/customer-service/suggestions/create",
+          },
+        ],
       },
     ],
   },
