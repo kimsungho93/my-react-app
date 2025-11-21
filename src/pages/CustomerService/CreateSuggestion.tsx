@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   Box,
   Typography,
@@ -27,6 +28,7 @@ import {
   SUGGESTION_CATEGORY_LABELS,
 } from "../../types/suggestion.types";
 import { Toast, useToast } from "../../components/common/Toast";
+import type { RootState } from "../../store";
 
 /**
  * 건의하기 페이지
@@ -40,6 +42,9 @@ import { Toast, useToast } from "../../components/common/Toast";
 const CreateSuggestion = () => {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
+
+  // Redux에서 사용자 정보 가져오기
+  const user = useSelector((state: RootState) => state.auth.user);
 
   // 폼 상태
   const [title, setTitle] = useState("");
@@ -138,18 +143,45 @@ const CreateSuggestion = () => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = Array.from(e.target.files || []);
 
+      // 허용되는 파일 확장자
+      const allowedExtensions = [
+        // 이미지
+        "jpg", "jpeg", "png", "gif", "bmp", "webp", "svg",
+        // PDF
+        "pdf",
+        // Office 문서
+        "doc", "docx", "xls", "xlsx", "ppt", "pptx"
+      ];
+
+      // 파일 확장자 검증
+      const invalidExtensionFiles = selectedFiles.filter((file) => {
+        const extension = file.name.split(".").pop()?.toLowerCase() || "";
+        return !allowedExtensions.includes(extension);
+      });
+
+      if (invalidExtensionFiles.length > 0) {
+        showToast(
+          "이미지, PDF, Office 문서 파일만 첨부 가능합니다.",
+          "warning"
+        );
+        e.target.value = "";
+        return;
+      }
+
       // 파일 개수 제한 (최대 5개)
       if (files.length + selectedFiles.length > 5) {
         showToast("파일은 최대 5개까지 첨부 가능합니다.", "warning");
+        e.target.value = "";
         return;
       }
 
       // 파일 크기 제한 (각 파일 최대 10MB)
-      const invalidFiles = selectedFiles.filter(
+      const invalidSizeFiles = selectedFiles.filter(
         (file) => file.size > 10 * 1024 * 1024
       );
-      if (invalidFiles.length > 0) {
+      if (invalidSizeFiles.length > 0) {
         showToast("파일 크기는 최대 10MB까지 가능합니다.", "warning");
+        e.target.value = "";
         return;
       }
 
@@ -192,24 +224,16 @@ const CreateSuggestion = () => {
     setIsSubmitting(true);
 
     try {
-      // 파일 업로드 (있는 경우)
-      let uploadedFileNames: string[] = [];
-      if (files.length > 0) {
-        const uploadPromises = files.map((file) =>
-          suggestionApi.uploadFile(file)
-        );
-        const uploadResults = await Promise.all(uploadPromises);
-        uploadedFileNames = uploadResults.map((result) => result.fileName);
-      }
-
-      // 건의사항 생성
-      await suggestionApi.createSuggestion({
-        title,
-        content,
-        category: category as SuggestionCategory,
-        name: "사용자", // 추후 로그인한 사용자 정보로 대체
-        attachments: uploadedFileNames,
-      });
+      // 건의사항 생성 (파일 포함)
+      await suggestionApi.createSuggestion(
+        {
+          title,
+          content,
+          category: category as SuggestionCategory,
+          name: user?.name || "익명",
+        },
+        files
+      );
 
       showToast("건의사항이 성공적으로 제출되었습니다.", "success");
 
@@ -223,7 +247,7 @@ const CreateSuggestion = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, content, category, files, validateField, showToast, navigate]);
+  }, [title, content, category, files, validateField, showToast, navigate, user?.name]);
 
   /**
    * 취소 핸들러
@@ -344,14 +368,14 @@ const CreateSuggestion = () => {
               required
               fullWidth
               multiline
-              rows={10}
+              rows={4}
               sx={{
                 "& .MuiInputBase-root": {
                   fontSize: { xs: "0.9rem", sm: "1rem" },
                   alignItems: "flex-start",
                 },
                 "& .MuiInputBase-input": {
-                  minHeight: { xs: "200px", sm: "300px" },
+                  minHeight: { xs: "80px", sm: "100px" },
                 },
               }}
             />
@@ -374,11 +398,11 @@ const CreateSuggestion = () => {
                   hidden
                   multiple
                   onChange={handleFileSelect}
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                 />
               </Button>
               <Typography variant="caption" color="text.secondary" display="block">
-                파일당 최대 10MB, 최대 5개까지 첨부 가능
+                이미지, PDF, Office 문서 (최대 10MB, 5개)
               </Typography>
 
               {/* 첨부된 파일 목록 */}

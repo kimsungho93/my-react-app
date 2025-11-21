@@ -26,13 +26,13 @@ export const SUGGESTION_CATEGORY_LABELS: Record<SuggestionCategory, string> = {
 
 /**
  * 건의사항 생성 요청
+ * 파일은 FormData의 files 필드로 별도 전송
  */
 export interface CreateSuggestionRequest {
   title: string;
   content: string;
   category: SuggestionCategory;
   name: string;
-  attachments?: string[];
 }
 
 /**
@@ -44,10 +44,11 @@ export interface Suggestion {
   content: string;
   category: SuggestionCategory;
   name: string;
-  attachments: string[];
+  attachments: FileMetadataResponse[];
   createdAt: string;
   updatedAt?: string;
-  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REJECTED";
+  status: SuggestionStatus;
+  adminComment?: string;
 }
 
 /**
@@ -56,4 +57,65 @@ export interface Suggestion {
 export interface FileUploadResponse {
   fileName: string;
   fileUrl: string;
+}
+
+/**
+ * 파일 메타데이터 응답
+ */
+export interface FileMetadataResponse {
+  originalFileName: string;
+  storedFileName: string;
+  fileUrl: string;
+  fileSize: number;
+}
+
+/**
+ * 페이징 정렬 정보
+ */
+export interface Sort {
+  empty: boolean;
+  sorted: boolean;
+  unsorted: boolean;
+}
+
+/**
+ * 페이징 정보
+ */
+export interface Pageable {
+  pageNumber: number;
+  pageSize: number;
+  sort: Sort;
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+/**
+ * 페이징된 응답
+ */
+export interface PageResponse<T> {
+  content: T[];
+  pageable: Pageable;
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  sort: Sort;
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+/**
+ * 건의사항 상태 타입
+ */
+export type SuggestionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REJECTED";
+
+/**
+ * 건의사항 상태 업데이트 요청
+ */
+export interface UpdateSuggestionStatusRequest {
+  status: SuggestionStatus;
+  adminComment?: string;
 }

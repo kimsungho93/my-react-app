@@ -20,7 +20,7 @@ import {
   Category as CategoryIcon,
   FilterList,
 } from "@mui/icons-material";
-// import { suggestionApi } from "../../services/api/suggestion.api";
+import { suggestionApi } from "../../services/api/suggestion.api";
 import { SUGGESTION_CATEGORY_LABELS } from "../../types/suggestion.types";
 import type { Suggestion } from "../../types/suggestion.types";
 import { Toast, useToast } from "../../components/common/Toast";
@@ -64,73 +64,29 @@ const SuggestionList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("ALL"); // ALL, PENDING, IN_PROGRESS, COMPLETED, REJECTED
 
+  // 페이징 상태
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
   /**
    * 건의사항 목록 조회
    */
-  const fetchSuggestions = useCallback(async () => {
+  const fetchSuggestions = useCallback(async (pageNum: number = 0) => {
     setIsLoading(true);
     try {
-      // TODO: API 구현 전 Mock 데이터 사용
-      // const data = await suggestionApi.getSuggestions();
+      const response = await suggestionApi.getSuggestions(pageNum, 20);
 
-      // Mock 데이터
-      const mockData: Suggestion[] = [
-        {
-          id: 1,
-          title: "대시보드 로딩 속도 개선 요청",
-          content: "대시보드 페이지가 로딩될 때 3초 이상 걸립니다. 초기 로딩 속도를 개선해주시면 좋겠습니다.",
-          category: "SYSTEM",
-          name: "홍길동",
-          attachments: ["screenshot1.png", "screenshot2.png"],
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2시간 전
-          status: "IN_PROGRESS",
-        },
-        {
-          id: 2,
-          title: "모바일 환경에서 버튼이 잘립니다",
-          content: "iPhone 13에서 게임 메뉴의 버튼이 화면 밖으로 잘려서 클릭할 수 없습니다. Safe Area 처리가 필요할 것 같습니다.",
-          category: "BUG",
-          name: "김철수",
-          attachments: [],
-          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1일 전
-          status: "PENDING",
-        },
-        {
-          id: 3,
-          title: "다크모드 지원 건의",
-          content: "밤에 사용할 때 눈이 부셔서 다크모드를 추가해주시면 좋겠습니다.",
-          category: "UI",
-          name: "이영희",
-          attachments: [],
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3일 전
-          status: "COMPLETED",
-        },
-        {
-          id: 4,
-          title: "사다리타기 결과 저장 기능",
-          content: "사다리타기 게임 결과를 저장하고 나중에 다시 볼 수 있는 기능이 있으면 좋겠습니다.",
-          category: "ETC",
-          name: "박민수",
-          attachments: ["design.pdf"],
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 전
-          status: "PENDING",
-        },
-        {
-          id: 5,
-          title: "룰렛 애니메이션 속도 조절",
-          content: "룰렛 돌아가는 속도가 너무 빨라서 결과를 확인하기 어렵습니다. 속도 조절 옵션이 있으면 좋겠어요.",
-          category: "UI",
-          name: "최지은",
-          attachments: [],
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 전
-          status: "REJECTED",
-        },
-      ];
+      // 첫 페이지면 교체, 아니면 추가
+      if (pageNum === 0) {
+        setSuggestions(response.content);
+      } else {
+        setSuggestions((prev) => [...prev, ...response.content]);
+      }
 
-      // 로딩 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setSuggestions(mockData);
+      setPage(response.number);
+      setTotalElements(response.totalElements);
+      setHasMore(!response.last);
     } catch (error) {
       console.error("건의사항 목록 조회 실패:", error);
       showToast("건의사항 목록을 불러오는데 실패했습니다.", "error");
@@ -144,6 +100,13 @@ const SuggestionList = () => {
   }, [fetchSuggestions]);
 
   /**
+   * 더보기 버튼 핸들러
+   */
+  const handleLoadMore = useCallback(() => {
+    fetchSuggestions(page + 1);
+  }, [fetchSuggestions, page]);
+
+  /**
    * 건의사항 작성 페이지로 이동
    */
   const handleCreateClick = useCallback(() => {
@@ -151,15 +114,13 @@ const SuggestionList = () => {
   }, [navigate]);
 
   /**
-   * 건의사항 상세 페이지로 이동 (추후 구현)
+   * 건의사항 상세 페이지로 이동
    */
   const handleSuggestionClick = useCallback(
     (id: number) => {
-      // 추후 상세 페이지 구현
-      console.log("건의사항 상세:", id);
-      showToast("상세 페이지는 추후 구현 예정입니다.", "info");
+      navigate(`/customer-service/suggestions/${id}`);
     },
-    [showToast]
+    [navigate]
   );
 
   /**
@@ -372,7 +333,7 @@ const SuggestionList = () => {
                 }}
               >
                 <CardActionArea
-                  onClick={() => handleSuggestionClick(suggestion.id)}
+                  onDoubleClick={() => handleSuggestionClick(suggestion.id)}
                   sx={{ p: { xs: 2, sm: 3 } }}
                 >
                   <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
@@ -469,6 +430,23 @@ const SuggestionList = () => {
                 </CardActionArea>
               </Card>
             ))}
+
+            {/* 더보기 버튼 */}
+            {hasMore && !isLoading && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleLoadMore}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    fontSize: { xs: "0.9rem", sm: "1rem" },
+                  }}
+                >
+                  더보기 ({suggestions.length} / {totalElements})
+                </Button>
+              </Box>
+            )}
           </Stack>
         )}
       </Container>

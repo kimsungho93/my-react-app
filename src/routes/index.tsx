@@ -7,6 +7,7 @@ import Ladder from "../pages/Game/Ladder";
 import Roulette from "../pages/Game/Roulette";
 import CreateSuggestion from "../pages/CustomerService/CreateSuggestion";
 import SuggestionList from "../pages/CustomerService/SuggestionList";
+import SuggestionDetail from "../pages/CustomerService/SuggestionDetail";
 
 /**
  * 애플리케이션 라우팅 설정
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
           {
             path: "customer-service/suggestions/create",
             element: <CreateSuggestion />,
+          },
+          {
+            path: "customer-service/suggestions/:id",
+            element: <SuggestionDetail />,
           },
           //   {
           //     path: 'sales/orders',
