@@ -9,6 +9,13 @@ import {
   Feedback,
   QuestionAnswer,
   List,
+  Forum,
+  Chat,
+  Article,
+  ChatBubble,
+  Send,
+  DynamicFeed,
+  ViewList,
 } from "@mui/icons-material";
 import type { MenuItem } from "../types/menu.types";
 
@@ -57,6 +64,58 @@ export const MENU_DATA: MenuItem[] = [
         id: "game-roulette",
         title: "룰렛 돌리기",
         path: "/game/roulette",
+      },
+    ],
+  },
+  {
+    id: "community",
+    title: "커뮤니티",
+    icon: Forum,
+    children: [
+      {
+        id: "community-chat",
+        title: "채팅",
+        icon: Chat,
+        children: [
+          {
+            id: "community-chat-list",
+            title: "채팅방 조회",
+            icon: ChatBubble,
+            path: "/community/chat/list",
+          },
+          {
+            id: "community-chat-create",
+            title: "채팅하기",
+            icon: Send,
+            path: "/community/chat/create",
+          },
+        ],
+      },
+      {
+        id: "community-board",
+        title: "게시판",
+        icon: Article,
+        children: [
+          {
+            id: "community-board-list",
+            title: "게시글 조회",
+            icon: List,
+            path: "/community/board/list",
+          },
+        ],
+      },
+      {
+        id: "community-feed",
+        title: "피드",
+        icon: DynamicFeed,
+        children: [
+          {
+            id: "community-feed-list",
+            title: "피드 조회",
+            icon: ViewList,
+            path: "/community/feed/list",
+          },
+        ],
       },
     ],
   },

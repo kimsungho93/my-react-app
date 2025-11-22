@@ -5,6 +5,10 @@ import Dashboard from "../pages/Dashboard";
 import { Login } from "../pages/Login/Login";
 import Ladder from "../pages/Game/Ladder";
 import Roulette from "../pages/Game/Roulette";
+import ChatList from "../pages/Community/ChatList";
+import ChatCreate from "../pages/Community/ChatCreate";
+import BoardList from "../pages/Community/BoardList";
+import FeedList from "../pages/Community/FeedList";
 import CreateSuggestion from "../pages/CustomerService/CreateSuggestion";
 import SuggestionList from "../pages/CustomerService/SuggestionList";
 import SuggestionDetail from "../pages/CustomerService/SuggestionDetail";
@@ -40,6 +44,22 @@ export const router = createBrowserRouter([
           {
             path: "game/roulette",
             element: <Roulette />,
+          },
+          {
+            path: "community/chat/list",
+            element: <ChatList />,
+          },
+          {
+            path: "community/chat/create",
+            element: <ChatCreate />,
+          },
+          {
+            path: "community/board/list",
+            element: <BoardList />,
+          },
+          {
+            path: "community/feed/list",
+            element: <FeedList />,
           },
           {
             path: "customer-service/suggestions",
