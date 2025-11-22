@@ -88,12 +88,25 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             disabled={item.disabled}
             selected={active}
             sx={{
-              pl: 2 + depth * 1.5, // 모바일에서 depth 패딩 축소
+              pl: 2 + depth * 2, // depth에 따른 들여쓰기 증가 (각 depth마다 2 단위씩)
+              pr: 2,
               minHeight: 44, // 모바일 터치 타겟 크기
               justifyContent: "flex-start",
-              px: 2,
+              borderLeft: depth > 0 ? 3 : 0, // 하위 메뉴에 왼쪽 보더 추가
+              borderColor: depth > 0 ? (depth === 1 ? "primary.light" : "secondary.light") : "transparent", // depth별 보더 색상
+              backgroundColor:
+                depth === 0 ? "transparent" :
+                depth === 1 ? (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.03)" :
+                (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)", // depth별 배경색 차별화
+              "&:hover": {
+                backgroundColor:
+                  depth === 0 ? "action.hover" :
+                  depth === 1 ? (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)" :
+                  (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)",
+              },
               "&.Mui-selected": {
                 backgroundColor: "primary.light",
+                borderLeftColor: "primary.main", // 선택된 하위 메뉴 보더 색상
                 "&:hover": {
                   backgroundColor: "primary.light",
                 },
@@ -107,14 +120,15 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
                   mr: 2, // 모바일에서 항상 마진 적용
                   justifyContent: "center",
                   color: active ? "primary.main" : "inherit",
+                  fontSize: depth > 0 ? "1.25rem" : "1.5rem", // 하위 메뉴 아이콘 작게
                 }}
               >
                 {item.badge ? (
                   <Badge badgeContent={item.badge} color="error">
-                    <item.icon />
+                    <item.icon fontSize={depth > 0 ? "small" : "medium"} />
                   </Badge>
                 ) : (
-                  <item.icon />
+                  <item.icon fontSize={depth > 0 ? "small" : "medium"} />
                 )}
               </ListItemIcon>
             )}
@@ -122,8 +136,17 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             <ListItemText
               primary={item.title}
               primaryTypographyProps={{
-                fontSize: "0.875rem", // 모바일 폰트 크기
+                fontSize:
+                  depth === 0 ? "0.875rem" :
+                  depth === 1 ? "0.8125rem" :
+                  "0.75rem", // depth별 폰트 크기 차별화
                 fontWeight: active ? 600 : 400,
+                sx: {
+                  color:
+                    depth === 0 ? "text.primary" :
+                    depth === 1 ? "text.secondary" :
+                    (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)", // depth별 색상 차별화
+                },
               }}
             />
             {hasChildren && (isOpen ? <ExpandLess /> : <ExpandMore />)}
@@ -137,7 +160,16 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             {/* 하위 메뉴 렌더링 (모바일에서 항상 표시) */}
             {hasChildren && (
               <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
+                <List
+                  component="div"
+                  disablePadding
+                  sx={{
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? depth === 0 ? "rgba(255, 255, 255, 0.02)" : "rgba(255, 255, 255, 0.04)"
+                        : depth === 0 ? "rgba(0, 0, 0, 0.02)" : "rgba(0, 0, 0, 0.04)", // depth별 배경색 차별화
+                  }}
+                >
                   {item.children!.map((child) =>
                     renderMenuItem(child, depth + 1)
                   )}
