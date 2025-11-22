@@ -194,16 +194,25 @@ export const HorizontalNav = React.memo(() => {
       <Toolbar>
         {/* 로고 */}
         <Box
-          component="span"
           onClick={() => navigate("/")}
           sx={{
-            fontSize: 20,
-            fontWeight: 700,
             mr: 4,
             cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
           }}
         >
-          LOGO
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Logo"
+            sx={{
+              height: 40,
+              width: "auto",
+              maxWidth: 150,
+              objectFit: "contain",
+            }}
+          />
         </Box>
 
         {/* 메뉴 리스트 */}

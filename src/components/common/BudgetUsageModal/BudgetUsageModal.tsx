@@ -16,16 +16,24 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Draggable from "react-draggable";
 import type { BudgetUsage } from "../../../types/dashboard.types";
 
 /**
- * 드래그 가능한 Paper 컴포넌트
+ * 드래그 가능한 Paper 컴포넌트 (데스크톱 전용)
  */
-function DraggablePaper(props: React.ComponentProps<typeof Paper>) {
+function DraggablePaper(props: React.ComponentProps<typeof Paper> & { isMobile: boolean }) {
   const nodeRef = useRef<HTMLDivElement>(null);
+  const { isMobile, ...paperProps } = props;
+
+  // 모바일에서는 드래그 비활성화
+  if (isMobile) {
+    return <Paper ref={nodeRef} {...paperProps} />;
+  }
 
   return (
     <Draggable
@@ -33,7 +41,7 @@ function DraggablePaper(props: React.ComponentProps<typeof Paper>) {
       handle="#draggable-dialog-title"
       cancel={'[class*="MuiDialogContent-root"]'}
     >
-      <Paper ref={nodeRef} {...props} />
+      <Paper ref={nodeRef} {...paperProps} />
     </Draggable>
   );
 }
@@ -54,6 +62,9 @@ interface BudgetUsageModalProps {
  */
 export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
   ({ open, onClose, usageHistory, loading, error, year, month }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
     /**
      * 날짜 포맷팅 (YYYY-MM-DD)
      */
@@ -73,16 +84,25 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
       return `${amount.toLocaleString()}원`;
     };
 
+    /**
+     * 닫기 버튼 클릭 핸들러 (이벤트 전파 중지)
+     */
+    const handleClose = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onClose();
+    };
+
     return (
       <Dialog
         open={open}
         onClose={onClose}
         maxWidth="md"
         fullWidth
-        PaperComponent={DraggablePaper}
+        PaperComponent={(props) => <DraggablePaper {...props} isMobile={isMobile} />}
         PaperProps={{
           sx: {
             borderRadius: 2,
+            m: isMobile ? 2 : undefined, // 모바일에서 여백 추가
           },
         }}
       >
@@ -94,11 +114,16 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
             justifyContent: "space-between",
             alignItems: "center",
             pb: 2,
-            cursor: "move",
+            cursor: isMobile ? "default" : "move", // 모바일에서는 일반 커서
           }}
         >
           <Box>
-            <Typography variant="h6" component="span" fontWeight={600}>
+            <Typography
+              variant="h6"
+              component="span"
+              fontWeight={600}
+              sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }} // 모바일 폰트 크기 조정
+            >
               예산 사용 이력
             </Typography>
             <Chip
@@ -109,11 +134,14 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
             />
           </Box>
           <IconButton
-            onClick={onClose}
+            onClick={handleClose}
             size="small"
             sx={{
               color: "text.secondary",
+              minWidth: 44, // 모바일 터치 영역
+              minHeight: 44,
             }}
+            aria-label="닫기"
           >
             <CloseIcon />
           </IconButton>

@@ -178,11 +178,21 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
             justifyContent: "center",
             height: 56, // 모바일 헤더 높이와 동일
             px: 2,
+            cursor: "pointer",
           }}
+          onClick={() => navigate("/")}
         >
-          <Box component="span" sx={{ fontSize: 18, fontWeight: 700 }}>
-            LOGO
-          </Box>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Logo"
+            sx={{
+              height: 40,
+              width: "auto",
+              maxWidth: "100%",
+              objectFit: "contain",
+            }}
+          />
         </Box>
 
         <Divider />
