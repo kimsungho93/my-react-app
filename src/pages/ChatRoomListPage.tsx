@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useAppSelector } from '../../hooks/useRedux';
-import type { ChatRoom, CreateChatRoomRequest } from '../../types/chat.types';
-import { getChatRooms, createChatRoom, joinChatRoom } from '../../services/api/chatApi';
-import CreateChatRoomModal from '../../components/chat/CreateChatRoomModal';
-import ChatRoomItem from '../../components/chat/ChatRoomItem';
-import './ChatList.css';
+import type { ChatRoom, CreateChatRoomRequest } from '../types/chat.types';
+import { getChatRooms, createChatRoom, joinChatRoom } from '../services/api/chatApi';
+import CreateChatRoomModal from '../components/chat/CreateChatRoomModal';
+import ChatRoomItem from '../components/chat/ChatRoomItem';
+import './ChatRoomListPage.css';
 
 /**
  * 채팅방 목록 페이지
  */
-export default function ChatList() {
+export default function ChatRoomListPage() {
   const navigate = useNavigate();
-  const isDarkMode = useAppSelector((state) => state.theme.mode === 'dark');
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,7 +71,7 @@ export default function ChatList() {
       }
 
       // TODO: 실제 채팅방 페이지로 이동
-      navigate(`/community/chat/${roomId}`);
+      navigate(`/chat/${roomId}`);
     } catch (error) {
       console.error('채팅방 입장 실패:', error);
       alert('채팅방 입장에 실패했습니다.');
@@ -86,79 +83,34 @@ export default function ChatList() {
   }, []);
 
   return (
-    <div className={`chat-list-page ${isDarkMode ? 'dark' : ''}`}>
-      <motion.div
-        className="page-header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <motion.h1
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          채팅
-        </motion.h1>
-        <motion.button
+    <div className="chat-room-list-page">
+      <div className="page-header">
+        <h1>채팅</h1>
+        <button
           className="create-room-btn"
           onClick={() => setIsModalOpen(true)}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
         >
           + 채팅하기
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
       {loading ? (
-        <motion.div
-          className="loading-container"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            className="loading-spinner"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            채팅방 목록을 불러오는 중...
-          </motion.p>
-        </motion.div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>채팅방 목록을 불러오는 중...</p>
+        </div>
       ) : rooms.length === 0 ? (
-        <motion.div
-          className="empty-state"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <motion.div
-            className="empty-icon"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          >
-            💬
-          </motion.div>
+        <div className="empty-state">
           <p>개설된 채팅방이 없습니다.</p>
           <p className="empty-sub">위의 "채팅하기" 버튼으로 채팅방을 만들어보세요!</p>
-        </motion.div>
+        </div>
       ) : (
         <div className="chat-room-grid">
-          {rooms.map((room, index) => (
+          {rooms.map((room) => (
             <ChatRoomItem
               key={room.id}
               room={room}
               onDoubleClick={handleJoinRoom}
-              index={index}
             />
           ))}
         </div>

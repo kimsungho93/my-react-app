@@ -1,0 +1,337 @@
+/* 모달 오버레이 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.dark {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* 모달 컨텐츠 - 모바일 기준 */
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-content.dark {
+  background: #1f2937;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* 모달 헤더 */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-content.dark .modal-header {
+  border-bottom-color: #374151;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-content.dark .modal-header h2 {
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.modal-content.dark .modal-close-btn {
+  color: #9ca3af;
+}
+
+.modal-close-btn:active {
+  background-color: #f3f4f6;
+}
+
+.modal-content.dark .modal-close-btn:active {
+  background-color: #374151;
+}
+
+/* 채팅방 폼 */
+.chat-room-form {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.modal-content.dark .form-group label {
+  color: #e5e7eb;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.modal-content.dark .required {
+  color: #f87171;
+}
+
+/* 글자 수 카운터 */
+.char-counter {
+  position: absolute;
+  right: 0.75rem;
+  top: 2.5rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.modal-content.dark .char-counter {
+  color: #6b7280;
+}
+
+/* 체크박스 */
+.checkbox-wrapper {
+  margin-bottom: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.checkbox-text {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.modal-content.dark .checkbox-text {
+  color: #e5e7eb;
+}
+
+/* 입력 필드 */
+.form-group input[type='text'],
+.form-group input[type='password'],
+.form-group input[type='number'] {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  min-height: 44px;
+  background: white;
+  color: #1f2937;
+}
+
+.modal-content.dark .form-group input[type='text'],
+.modal-content.dark .form-group input[type='password'],
+.modal-content.dark .form-group input[type='number'] {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.modal-content.dark .form-group input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1);
+}
+
+.password-input {
+  margin-top: 0.5rem;
+}
+
+/* 인원 수 입력 */
+.participants-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.participants-input input {
+  width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  padding: 0.75rem 0.25rem !important;
+  text-align: center;
+  font-weight: 600;
+}
+
+.participants-label {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.modal-content.dark .participants-label {
+  color: #9ca3af;
+}
+
+/* 에러 메시지 */
+.error-message {
+  margin: 0.5rem 0 0 0;
+  color: #ef4444;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.modal-content.dark .error-message {
+  color: #f87171;
+}
+
+/* 모달 액션 버튼 */
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.modal-content.dark .btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.modal-content.dark .btn-secondary {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* 태블릿 이상 */
+@media (min-width: 769px) {
+  .modal-content {
+    max-width: 520px;
+  }
+
+  .modal-header {
+    padding: 2rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .chat-room-form {
+    padding: 2rem;
+  }
+
+  .modal-close-btn:hover {
+    background-color: #f3f4f6;
+  }
+
+  .modal-content.dark .modal-close-btn:hover {
+    background-color: #374151;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 12px -1px rgba(59, 130, 246, 0.4);
+  }
+
+  .modal-content.dark .btn-primary:hover {
+    box-shadow: 0 6px 12px -1px rgba(37, 99, 235, 0.5);
+  }
+
+  .btn-secondary:hover {
+    background-color: #e5e7eb;
+  }
+
+  .modal-content.dark .btn-secondary:hover {
+    background-color: #4b5563;
+  }
+}

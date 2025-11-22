@@ -12,8 +12,6 @@ import {
   Forum,
   Chat,
   Article,
-  ChatBubble,
-  Send,
   DynamicFeed,
   ViewList,
 } from "@mui/icons-material";
@@ -30,26 +28,6 @@ export const MENU_DATA: MenuItem[] = [
     icon: Dashboard,
     path: "/dashboard",
   },
-  // {
-  //   id: "sales",
-  //   title: "영업 관리",
-  //   icon: ShoppingCart,
-  //   children: [
-  //     {
-  //       id: "sales-orders",
-  //       title: "주문 관리",
-  //       icon: Description,
-  //       path: "/sales/orders",
-  //       badge: 5, // 신규 주문 알림
-  //     },
-  //     {
-  //       id: "sales-customers",
-  //       title: "고객 관리",
-  //       icon: People,
-  //       path: "/sales/customers",
-  //     },
-  //   ],
-  // },
   {
     id: "game",
     title: "게임",
@@ -73,23 +51,10 @@ export const MENU_DATA: MenuItem[] = [
     icon: Forum,
     children: [
       {
-        id: "community-chat",
+        id: "community-chat-list",
         title: "채팅",
         icon: Chat,
-        children: [
-          {
-            id: "community-chat-list",
-            title: "채팅방 조회",
-            icon: ChatBubble,
-            path: "/community/chat/list",
-          },
-          {
-            id: "community-chat-create",
-            title: "채팅하기",
-            icon: Send,
-            path: "/community/chat/create",
-          },
-        ],
+        path: "/community/chat/list",
       },
       {
         id: "community-board",
