@@ -80,7 +80,6 @@ const Dashboard = () => {
         dispatch(fetchBudget({ year: departmentBudget.year, month: departmentBudget.month }));
       } catch (error) {
         // 에러는 Redux에서 처리됨
-        console.error("예산 차감 실패:", error);
       }
     },
     [dispatch, departmentBudget]
@@ -147,13 +146,11 @@ const Dashboard = () => {
   );
 
   // 이벤트 선택 핸들러
-  const handleSelectEvent = useCallback((event: CalendarEvent) => {
-    console.log("Selected event:", event);
+  const handleSelectEvent = useCallback((_event: CalendarEvent) => {
     // TODO: 모달 열기 또는 상세 정보 표시
   }, []);
 
-  const handleSelectSlot = useCallback((slotInfo: { start: Date; end: Date }) => {
-    console.log("Selected slot:", slotInfo);
+  const handleSelectSlot = useCallback((_slotInfo: { start: Date; end: Date }) => {
     // TODO: 새 일정 생성 모달 열기
   }, []);
 

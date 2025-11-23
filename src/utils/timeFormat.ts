@@ -1,32 +1,47 @@
+import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+
 /**
  * 상대 시간 포맷 유틸리티
  * "방금 전", "5분 전", "2시간 전", "3일 전" 등의 형식으로 반환
  */
 export const getRelativeTime = (dateString: string): string => {
-  const now = new Date();
   const target = new Date(dateString);
-  const diffMs = now.getTime() - target.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
+  const now = new Date();
+  const diffSec = Math.floor((now.getTime() - target.getTime()) / 1000);
 
+  // 1분 미만은 "방금 전"
   if (diffSec < 60) {
     return '방금 전';
-  } else if (diffMin < 60) {
-    return `${diffMin}분 전`;
-  } else if (diffHour < 24) {
-    return `${diffHour}시간 전`;
-  } else if (diffDay < 7) {
-    return `${diffDay}일 전`;
-  } else if (diffDay < 30) {
-    const weeks = Math.floor(diffDay / 7);
-    return `${weeks}주 전`;
-  } else if (diffDay < 365) {
-    const months = Math.floor(diffDay / 30);
-    return `${months}개월 전`;
+  }
+
+  // date-fns의 formatDistanceToNow 사용
+  return formatDistanceToNow(target, {
+    addSuffix: true,
+    locale: ko
+  });
+};
+
+/**
+ * 채팅 메시지 시간 포맷 유틸리티
+ * 오늘: "오후 1:33"
+ * 어제: "어제 오후 1:33"
+ * 그 외: "2024.01.15 오후 1:33"
+ */
+export const formatChatTime = (dateString: string): string => {
+  const target = new Date(dateString);
+
+  const hours = target.getHours();
+  const period = hours < 12 ? '오전' : '오후';
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = format(target, 'mm');
+  const timeStr = `${period} ${displayHours}:${displayMinutes}`;
+
+  if (isToday(target)) {
+    return timeStr;
+  } else if (isYesterday(target)) {
+    return `어제 ${timeStr}`;
   } else {
-    const years = Math.floor(diffDay / 365);
-    return `${years}년 전`;
+    return `${format(target, 'yyyy.MM.dd')} ${timeStr}`;
   }
 };

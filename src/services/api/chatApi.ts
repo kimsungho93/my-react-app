@@ -1,121 +1,112 @@
-import type { ChatRoom, CreateChatRoomRequest, JoinChatRoomRequest } from '../../types/chat.types';
+import { apiClient } from "./client";
+import type {
+  ChatRoom,
+  CreateChatRoomRequest,
+  JoinChatRoomRequest,
+  ChatMessagePageResponse,
+  ChatMessage,
+} from "../../types/chat.types";
 
 /**
- * Mock 채팅방 데이터
+ * Spring Boot Page 응답 타입
  */
-const mockChatRooms: ChatRoom[] = [
-  {
-    id: '1',
-    name: '자유 채팅방',
-    hasPassword: false,
-    creatorName: '홍길동',
-    currentParticipants: 5,
-    maxParticipants: 10,
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5분 전
-  },
-  {
-    id: '2',
-    name: '비밀 채팅방',
-    hasPassword: true,
-    creatorName: '김철수',
-    currentParticipants: 3,
-    maxParticipants: 8,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2시간 전
-  },
-  {
-    id: '3',
-    name: '프로젝트 논의',
-    hasPassword: true,
-    creatorName: '이영희',
-    currentParticipants: 7,
-    maxParticipants: 15,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3일 전
-  },
-  {
-    id: '4',
-    name: '게임 파티',
-    hasPassword: false,
-    creatorName: '박민수',
-    currentParticipants: 2,
-    maxParticipants: 5,
-    createdAt: new Date(Date.now() - 30 * 1000).toISOString(), // 30초 전 (방금 전)
-  },
-  {
-    id: '5',
-    name: '스터디 그룹',
-    hasPassword: true,
-    creatorName: '정수진',
-    currentParticipants: 10,
-    maxParticipants: 12,
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 2주 전
-  },
-  {
-    id: '6',
-    name: '리액트와타입스크립트를활용한웹개발스터디모임',
-    hasPassword: false,
-    creatorName: '최개발',
-    currentParticipants: 8,
-    maxParticipants: 15,
-    createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45분 전
-  },
-];
+interface SpringPageResponse<T> {
+  content: T[];
+  number: number;
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+}
 
 /**
- * 채팅방 목록 조회 API (Mock)
+ * 채팅 관련 API 서비스
  */
-export const getChatRooms = async (): Promise<ChatRoom[]> => {
-  // 실제 API 호출을 시뮬레이션하기 위한 딜레이
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return [...mockChatRooms];
+export const chatApi = {
+  /**
+   * 채팅방 목록 조회
+   * GET /api/chat/rooms
+   */
+  getChatRooms: async (): Promise<ChatRoom[]> => {
+    const response = await apiClient.get<ChatRoom[]>("/chat/rooms");
+    // 백엔드에서 createdAt이 없는 경우 현재 시간으로 설정
+    return response.data.map(room => ({
+      ...room,
+      createdAt: room.createdAt || new Date().toISOString(),
+    }));
+  },
+
+  /**
+   * 채팅방 생성
+   * POST /api/chat/rooms
+   */
+  createChatRoom: async (
+    request: CreateChatRoomRequest
+  ): Promise<ChatRoom> => {
+    const response = await apiClient.post<ChatRoom>("/chat/rooms", request);
+    // 백엔드에서 createdAt이 없는 경우 현재 시간으로 설정
+    return {
+      ...response.data,
+      createdAt: response.data.createdAt || new Date().toISOString(),
+    };
+  },
+
+  /**
+   * 채팅방 입장 (비밀번호 검증)
+   * POST /api/chat/rooms/{roomId}/join
+   */
+  joinChatRoom: async (
+    roomId: string,
+    password?: string
+  ): Promise<void> => {
+    const body = password ? { password } : undefined;
+    await apiClient.post(`/chat/rooms/${roomId}/join`, body);
+  },
+
+  /**
+   * 채팅방 나가기
+   * POST /api/chat/rooms/{roomId}/leave
+   */
+  leaveChatRoom: async (roomId: string): Promise<void> => {
+    await apiClient.post(`/chat/rooms/${roomId}/leave`);
+  },
+
+  /**
+   * 특정 채팅방의 메시지 조회 (페이징)
+   * GET /api/chat/rooms/{roomId}/messages
+   */
+  getChatMessages: async (
+    roomId: string,
+    page: number = 0,
+    size: number = 50
+  ): Promise<ChatMessagePageResponse> => {
+    // 백엔드는 Spring의 Page<ChatMessageResponse> 형태로 반환
+    // sort=createdAt,asc로 오래된 메시지부터 가져오기
+    const response = await apiClient.get<SpringPageResponse<ChatMessage>>(
+      `/chat/rooms/${roomId}/messages`,
+      {
+        params: {
+          page,
+          size,
+          sort: 'createdAt,asc' // 오래된 메시지부터 (최신 메시지가 아래로)
+        },
+      }
+    );
+
+    // Spring Page 구조를 프론트엔드 형태로 변환
+    return {
+      messages: response.data.content || [],
+      currentPage: response.data.number || 0,
+      totalPages: response.data.totalPages || 0,
+      totalElements: response.data.totalElements || 0,
+      hasNext: !response.data.last,
+    };
+  },
 };
 
-/**
- * 채팅방 생성 API (Mock)
- */
-export const createChatRoom = async (
-  request: CreateChatRoomRequest
-): Promise<ChatRoom> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const newRoom: ChatRoom = {
-    id: String(mockChatRooms.length + 1),
-    name: request.name,
-    hasPassword: !!request.password,
-    creatorName: '현재 사용자', // TODO: 실제 사용자 정보로 대체
-    currentParticipants: 1,
-    maxParticipants: request.maxParticipants,
-    createdAt: new Date().toISOString(),
-  };
-
-  mockChatRooms.push(newRoom);
-  return newRoom;
-};
-
-/**
- * 채팅방 입장 API (Mock)
- */
-export const joinChatRoom = async (
-  request: JoinChatRoomRequest
-): Promise<{ success: boolean; message?: string }> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  const room = mockChatRooms.find((r) => r.id === request.roomId);
-
-  if (!room) {
-    return { success: false, message: '채팅방을 찾을 수 없습니다.' };
-  }
-
-  if (room.currentParticipants >= room.maxParticipants) {
-    return { success: false, message: '채팅방이 가득 찼습니다.' };
-  }
-
-  // 실제로는 비밀번호 검증이 필요
-  if (room.hasPassword && !request.password) {
-    return { success: false, message: '비밀번호가 필요합니다.' };
-  }
-
-  // Mock: 입장 성공 시 참여 인원 증가
-  room.currentParticipants += 1;
-
-  return { success: true };
-};
+// 하위 호환성을 위한 개별 함수 export
+export const getChatRooms = chatApi.getChatRooms;
+export const createChatRoom = chatApi.createChatRoom;
+export const joinChatRoom = (request: JoinChatRoomRequest) =>
+  chatApi.joinChatRoom(request.roomId, request.password);
+export const leaveChatRoom = chatApi.leaveChatRoom;
+export const getChatMessages = chatApi.getChatMessages;

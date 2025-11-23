@@ -5,9 +5,19 @@
 | 분류           | 스택                                         |
 | :------------- | :------------------------------------------- |
 | **언어**       | 한국어                                       |
-| **프론트엔드** | React + **TypeScript** + Vite                |
+| **프론트엔드** | React 19 + **TypeScript** + Vite             |
 | **상태 관리**  | **Redux Toolkit** (`createAsyncThunk` 포함)  |
+| **라우팅**     | **React Router DOM** (v7)                    |
 | **HTTP 통신**  | **Axios** (API 분리 및 인터셉터 에러 핸들링) |
+| **WebSocket**  | **STOMP.js** + **SockJS** (실시간 통신)      |
+| **날짜/시간**  | **date-fns** (날짜 포맷, 비교, 계산)         |
+| **애니메이션** | **Framer Motion** (컴포넌트 애니메이션)      |
+| **UI 라이브러리** | **Material-UI (MUI)** + **Emotion** (스타일링) |
+| **차트**       | **ECharts** (`echarts-for-react`)            |
+| **캘린더**     | **React Big Calendar**                       |
+| **3D 렌더링**  | **Three.js** + **React Three Fiber**         |
+| **오디오**     | **Howler.js** (사운드 재생)                  |
+| **드래그**     | **React Draggable**                          |
 | **백엔드**     | Spring Boot REST API                         |
 | **핵심 목표**  | **모바일 환경 최우선** (Mobile First)        |
 
@@ -40,13 +50,23 @@ src/
 
 ### 2.2. 핵심 원칙 및 안티패턴 💡
 
-| 분류       | 원칙 (✅)                                                                                            | 안티패턴 (❌)                            |
-| :--------- | :--------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| **언어**   | **TypeScript**, ES6+ (Optional Chaining, Nullish Coalescing), **JSDoc 한글 주석**                    | 직접 state 변경                          |
-| **설계**   | **DRY**, **단일 책임** 원칙, **Custom Hooks**, **Compound Components**, Early return                 | Prop Drilling, 거대 컴포넌트(500줄 이상) |
-| **상태**   | 전역(**Redux Toolkit**), 로컬(**useState**), **상태 로컬화** 최우선                                  | -                                        |
-| **API**    | `services/api/` 분리, 타입 명시, 인터셉터 에러 핸들링                                                | -                                        |
-| **최적화** | **React.memo**, **useMemo**, **useCallback**, **Error Boundaries**, **Code Splitting**, 안정적인 key | Inline 함수, index as key                |
+| 분류             | 원칙 (✅)                                                                                            | 안티패턴 (❌)                                     |
+| :--------------- | :--------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
+| **언어**         | **TypeScript**, ES6+ (Optional Chaining, Nullish Coalescing), **JSDoc 한글 주석**                    | 직접 state 변경                                   |
+| **설계**         | **DRY**, **단일 책임** 원칙, **Custom Hooks**, **Compound Components**, Early return                 | Prop Drilling, 거대 컴포넌트(500줄 이상)          |
+| **상태 관리**    | 전역(**Redux Toolkit**), 로컬(**useState**), **상태 로컬화** 최우선                                  | -                                                 |
+| **라우팅**       | **React Router DOM** (`useNavigate`, `useParams`, `<Link>`)                                          | `<a>` 태그 직접 사용, `window.location` 직접 조작 |
+| **HTTP 통신**    | **Axios** (`services/api/` 분리, 타입 명시, 인터셉터 에러 핸들링)                                    | `fetch` 직접 사용                                 |
+| **WebSocket**    | **STOMP.js + SockJS** (STOMP over WebSocket, 구독/발행 패턴)                                         | 네이티브 WebSocket 직접 사용                      |
+| **날짜/시간**    | **date-fns** (`format`, `isToday`, `isYesterday`, `formatDistanceToNow`)                            | `new Date()` 직접 조작, 수동 시간 계산            |
+| **애니메이션**   | **Framer Motion** (`motion` 컴포넌트, `variants`, `AnimatePresence`)                                  | CSS 트랜지션만 사용, 복잡한 애니메이션 수동 구현  |
+| **UI 컴포넌트**  | **MUI** (`Button`, `TextField`, `Dialog` 등), **Emotion** (`styled`, `css`)                          | 인라인 스타일, 일반 HTML 요소만 사용              |
+| **차트**         | **ECharts** (`echarts-for-react` 래퍼 사용)                                                          | 차트 라이브러리 없이 직접 Canvas/SVG 그리기       |
+| **캘린더**       | **React Big Calendar** (일정 표시, 이벤트 관리)                                                      | 캘린더 UI 직접 구현                               |
+| **3D/그래픽**    | **Three.js + React Three Fiber** (선언적 3D 렌더링)                                                  | Three.js 명령형 방식 직접 사용                    |
+| **오디오**       | **Howler.js** (사운드 재생, 볼륨 제어, 페이드 효과)                                                  | `<audio>` 태그 직접 조작                          |
+| **드래그 앤 드롭** | **React Draggable** (요소 드래그 이동)                                                                | 드래그 이벤트 직접 핸들링                         |
+| **최적화**       | **React.memo**, **useMemo**, **useCallback**, **Error Boundaries**, **Code Splitting**, 안정적인 key | Inline 함수, index as key                         |
 
 ### 2.3. 명명 규칙 (Naming Conventions)
 
@@ -93,6 +113,29 @@ src/
 
 에이전트는 제공된 모든 지침을 **엄격하게 준수**해야 합니다.
 
+### 4.1. 기본 규칙
+
 1.  모든 코드는 **TypeScript**로 작성합니다.
 2.  주석은 **한글 JSDoc 스타일**로 작성합니다.
 3.  **디렉토리 구조 (2.1)** 와 **명명 규칙 (2.3)** 은 예외 없이 지켜져야 합니다.
+
+### 4.2. 라이브러리 우선 사용 규칙
+
+새로운 기능을 구현할 때 **반드시** 아래 라이브러리를 우선적으로 고려하세요:
+
+| 기능 요구사항 | 사용할 라이브러리 | 예시 |
+| :------------ | :---------------- | :--- |
+| **페이지 이동/라우팅** | React Router DOM | `useNavigate()`, `<Link to="/path">` |
+| **API 호출** | Axios | `chatApi.getChatRooms()` (services/api/ 분리) |
+| **실시간 통신 (WebSocket)** | STOMP.js + SockJS | `client.subscribe('/topic/chat')` |
+| **날짜 포맷/계산** | date-fns | `format(date, 'yyyy.MM.dd')`, `isToday(date)` |
+| **애니메이션 효과** | Framer Motion | `<motion.div animate={{ opacity: 1 }}>` |
+| **버튼/입력/모달 등 UI** | Material-UI (MUI) | `<Button variant="contained">`, `<Dialog>` |
+| **스타일링 (CSS-in-JS)** | Emotion | `styled.div`, `css` prop |
+| **차트 그리기** | ECharts (echarts-for-react) | `<ReactECharts option={...} />` |
+| **캘린더/일정** | React Big Calendar | `<Calendar events={...} />` |
+| **3D 렌더링** | React Three Fiber | `<Canvas><mesh /></Canvas>` |
+| **사운드 재생** | Howler.js | `new Howl({ src: ['sound.mp3'] })` |
+| **드래그 앤 드롭** | React Draggable | `<Draggable><div>...</div></Draggable>` |
+
+**중요**: 위 기능을 구현할 때 네이티브 API(fetch, WebSocket, Date 등)나 직접 구현 대신 **반드시 해당 라이브러리**를 사용하세요.

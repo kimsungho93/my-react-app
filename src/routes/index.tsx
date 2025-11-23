@@ -12,6 +12,8 @@ import FeedList from "../pages/Community/FeedList";
 import CreateSuggestion from "../pages/CustomerService/CreateSuggestion";
 import SuggestionList from "../pages/CustomerService/SuggestionList";
 import SuggestionDetail from "../pages/CustomerService/SuggestionDetail";
+import ChatRoomListPage from "../pages/ChatRoomListPage";
+import ChatRoomPage from "../pages/ChatRoomPage";
 
 /**
  * 애플리케이션 라우팅 설정
@@ -52,6 +54,14 @@ export const router = createBrowserRouter([
           {
             path: "community/chat/create",
             element: <ChatCreate />,
+          },
+          {
+            path: "community/chat",
+            element: <ChatRoomListPage />,
+          },
+          {
+            path: "chat/:roomId",
+            element: <ChatRoomPage />,
           },
           {
             path: "community/board/list",

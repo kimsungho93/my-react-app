@@ -44,23 +44,16 @@ export const fetchBudget = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      console.log(`[Budget API] 요청: ${params.year}년 ${params.month}월`);
       const budget = await budgetApi.getBudget(params.year, params.month);
-      console.log("[Budget API] 응답:", budget);
       return budget;
     } catch (error) {
-      console.error("[Budget API] 에러:", error);
-
       if (error instanceof AxiosError) {
         const errorMessage =
           (error.response?.data as ApiErrorResponse)?.message ||
           `예산 정보를 불러오지 못했습니다. (상태 코드: ${error.response?.status})`;
-        console.error("[Budget API] 에러 메시지:", errorMessage);
-        console.error("[Budget API] 에러 응답:", error.response?.data);
         return rejectWithValue(errorMessage);
       }
 
-      console.error("[Budget API] 알 수 없는 에러:", error);
       return rejectWithValue(`알 수 없는 오류가 발생했습니다: ${error}`);
     }
   }
@@ -73,18 +66,13 @@ export const fetchBudgetUsageHistory = createAsyncThunk(
   "budget/fetchBudgetUsageHistory",
   async (budgetId: number, { rejectWithValue }) => {
     try {
-      console.log(`[Budget Usage API] 요청: budgetId=${budgetId}`);
       const usageHistory = await budgetApi.getBudgetUsageHistory(budgetId);
-      console.log("[Budget Usage API] 응답:", usageHistory);
       return usageHistory;
     } catch (error) {
-      console.error("[Budget Usage API] 에러:", error);
-
       if (error instanceof AxiosError) {
         const errorMessage =
           (error.response?.data as ApiErrorResponse)?.message ||
           `예산 사용 이력을 불러오지 못했습니다. (상태 코드: ${error.response?.status})`;
-        console.error("[Budget Usage API] 에러 메시지:", errorMessage);
         return rejectWithValue(errorMessage);
       }
 
@@ -103,18 +91,13 @@ export const deductBudget = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      console.log(`[Budget Deduct API] 요청: budgetId=${params.budgetId}`, params.request);
       const usage = await budgetApi.deductBudget(params.budgetId, params.request);
-      console.log("[Budget Deduct API] 응답:", usage);
       return usage;
     } catch (error) {
-      console.error("[Budget Deduct API] 에러:", error);
-
       if (error instanceof AxiosError) {
         const errorMessage =
           (error.response?.data as ApiErrorResponse)?.message ||
           `예산 차감에 실패했습니다. (상태 코드: ${error.response?.status})`;
-        console.error("[Budget Deduct API] 에러 메시지:", errorMessage);
         return rejectWithValue(errorMessage);
       }
 

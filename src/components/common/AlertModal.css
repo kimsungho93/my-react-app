@@ -1,0 +1,235 @@
+/**
+ * 커스텀 Alert 모달 스타일
+ */
+
+.alert-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.alert-modal-content {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.alert-modal-content.dark {
+  background-color: #2a2a2a;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* 아이콘 */
+.alert-modal-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 32px auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: iconPop 0.3s ease-out;
+}
+
+@keyframes iconPop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.alert-modal-icon.success {
+  background-color: #e8f5e9;
+}
+
+.alert-modal-icon.error {
+  background-color: #ffebee;
+}
+
+.alert-modal-icon.warning {
+  background-color: #fff3e0;
+}
+
+.alert-modal-icon.info {
+  background-color: #e3f2fd;
+}
+
+.alert-modal-content.dark .alert-modal-icon.success {
+  background-color: rgba(76, 175, 80, 0.2);
+}
+
+.alert-modal-content.dark .alert-modal-icon.error {
+  background-color: rgba(244, 67, 54, 0.2);
+}
+
+.alert-modal-content.dark .alert-modal-icon.warning {
+  background-color: rgba(255, 152, 0, 0.2);
+}
+
+.alert-modal-content.dark .alert-modal-icon.info {
+  background-color: rgba(33, 150, 243, 0.2);
+}
+
+.icon-text {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.alert-modal-icon.success .icon-text {
+  color: #4caf50;
+}
+
+.alert-modal-icon.error .icon-text {
+  color: #f44336;
+}
+
+.alert-modal-icon.warning .icon-text {
+  color: #ff9800;
+}
+
+.alert-modal-icon.info .icon-text {
+  color: #2196f3;
+}
+
+/* 헤더 */
+.alert-modal-header {
+  padding: 0 24px 16px;
+}
+
+.alert-modal-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.alert-modal-content.dark .alert-modal-title {
+  color: #e0e0e0;
+}
+
+/* 본문 */
+.alert-modal-body {
+  padding: 0 24px 28px;
+}
+
+.alert-modal-message {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #666;
+  white-space: pre-line;
+}
+
+.alert-modal-content.dark .alert-modal-message {
+  color: #999;
+}
+
+/* 푸터 */
+.alert-modal-footer {
+  padding: 0 24px 32px;
+}
+
+.alert-modal-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  min-width: 120px;
+}
+
+.alert-modal-btn.success {
+  background-color: #4caf50;
+}
+
+.alert-modal-btn.success:hover {
+  background-color: #43a047;
+}
+
+.alert-modal-btn.error {
+  background-color: #f44336;
+}
+
+.alert-modal-btn.error:hover {
+  background-color: #e53935;
+}
+
+.alert-modal-btn.warning {
+  background-color: #ff9800;
+}
+
+.alert-modal-btn.warning:hover {
+  background-color: #fb8c00;
+}
+
+.alert-modal-btn.info {
+  background-color: #2196f3;
+}
+
+.alert-modal-btn.info:hover {
+  background-color: #1e88e5;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+  .alert-modal-overlay {
+    padding: 16px;
+  }
+
+  .alert-modal-icon {
+    width: 56px;
+    height: 56px;
+    margin: 24px auto 12px;
+  }
+
+  .icon-text {
+    font-size: 28px;
+  }
+
+  .alert-modal-header {
+    padding: 0 20px 8px;
+  }
+
+  .alert-modal-title {
+    font-size: 18px;
+  }
+
+  .alert-modal-body {
+    padding: 0 20px 20px;
+  }
+
+  .alert-modal-message {
+    font-size: 14px;
+  }
+
+  .alert-modal-footer {
+    padding: 0 20px 24px;
+  }
+
+  .alert-modal-btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    min-width: 100px;
+  }
+}

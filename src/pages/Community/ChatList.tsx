@@ -6,6 +6,7 @@ import type { ChatRoom, CreateChatRoomRequest } from '../../types/chat.types';
 import { getChatRooms, createChatRoom, joinChatRoom } from '../../services/api/chatApi';
 import CreateChatRoomModal from '../../components/chat/CreateChatRoomModal';
 import ChatRoomItem from '../../components/chat/ChatRoomItem';
+import AlertModal from '../../components/common/AlertModal';
 import './ChatList.css';
 
 /**
@@ -17,6 +18,20 @@ export default function ChatList() {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Alert 모달 상태
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    onConfirmAction?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
 
   /**
    * 채팅방 목록 로드
@@ -39,12 +54,29 @@ export default function ChatList() {
    */
   const handleCreateRoom = async (request: CreateChatRoomRequest) => {
     try {
+      // 1. 채팅방 생성
       const newRoom = await createChatRoom(request);
-      setRooms((prev) => [newRoom, ...prev]);
-      alert('채팅방이 생성되었습니다!');
+
+      // 2. 생성한 채팅방에 입장 (참가 인원 카운트 증가)
+      await joinChatRoom({ roomId: newRoom.id, password: request.password });
+
+      // 3. 참가 인원이 증가된 채팅방 정보로 목록 업데이트
+      const updatedRoom: ChatRoom = {
+        ...newRoom,
+        currentParticipants: 1, // 생성자가 입장했으므로 1
+      };
+      setRooms((prev) => [updatedRoom, ...prev]);
+
+      // 4. 생성 성공 후 바로 채팅방으로 이동
+      navigate(`/chat/${newRoom.id}`);
     } catch (error) {
       console.error('채팅방 생성 실패:', error);
-      alert('채팅방 생성에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        title: '오류',
+        message: '채팅방 생성에 실패했습니다.',
+        type: 'error',
+      });
     }
   };
 
@@ -54,6 +86,17 @@ export default function ChatList() {
   const handleJoinRoom = async (roomId: string) => {
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
+
+    // 인원 초과 체크
+    if (room.currentParticipants >= room.maxParticipants) {
+      setAlertModal({
+        isOpen: true,
+        title: '입장 불가',
+        message: '채팅방이 가득 찼습니다.',
+        type: 'warning',
+      });
+      return;
+    }
 
     let password: string | undefined;
 
@@ -66,23 +109,45 @@ export default function ChatList() {
     }
 
     try {
-      const result = await joinChatRoom({ roomId, password });
+      await joinChatRoom({ roomId, password });
 
-      if (!result.success) {
-        alert(result.message || '채팅방 입장에 실패했습니다.');
-        return;
-      }
-
-      // TODO: 실제 채팅방 페이지로 이동
-      navigate(`/community/chat/${roomId}`);
+      // 채팅방 페이지로 이동
+      navigate(`/chat/${roomId}`);
     } catch (error) {
       console.error('채팅방 입장 실패:', error);
-      alert('채팅방 입장에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        title: '입장 실패',
+        message: '채팅방 입장에 실패했습니다. 비밀번호를 확인해주세요.',
+        type: 'error',
+      });
     }
   };
 
   useEffect(() => {
     loadChatRooms();
+
+    // 채팅방 목록 주기적 갱신 (30초마다)
+    const intervalId = setInterval(() => {
+      loadChatRooms();
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  // 페이지에 포커스가 돌아올 때 목록 새로고침 (채팅방에서 나왔을 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadChatRooms();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   return (
@@ -168,6 +233,20 @@ export default function ChatList() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreate={handleCreateRoom}
+      />
+
+      {/* Alert 모달 */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onConfirm={() => {
+          // 확인 버튼 클릭 시 추가 액션 실행 (채팅방 이동 등)
+          alertModal.onConfirmAction?.();
+          // 모달 닫기
+          setAlertModal((prev) => ({ ...prev, isOpen: false, onConfirmAction: undefined }));
+        }}
       />
     </div>
   );
