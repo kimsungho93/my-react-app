@@ -20,8 +20,101 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
 import { motion, AnimatePresence } from "framer-motion";
-import { Reorder } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { userApi } from "../../services/api/user.api";
+
+/**
+ * 정렬 가능한 참가자 아이템
+ */
+interface SortableItemProps {
+  id: string;
+  isPlaying: boolean;
+  onRemove: (name: string) => void;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ id, isPlaying, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: isPlaying });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      sx={{
+        touchAction: "none",
+      }}
+    >
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: isDragging ? 0.5 : 1, scale: 1 }}
+        whileHover={!isPlaying && !isDragging ? { scale: 1.03 } : {}}
+        transition={{
+          layout: { type: "spring", stiffness: 500, damping: 30 },
+        }}
+      >
+        <Chip
+          label={id}
+          color="primary"
+          variant="outlined"
+          onDelete={isPlaying ? undefined : () => onRemove(id)}
+          deleteIcon={<CloseIcon />}
+          sx={{
+            cursor: isPlaying ? "default" : "grab",
+            width: "100%",
+            justifyContent: "space-between",
+            fontSize: "0.85rem",
+            py: 1.2,
+            userSelect: "none",
+            boxShadow: isDragging
+              ? "0 10px 20px rgba(0,0,0,0.3)"
+              : "0 2px 4px rgba(0,0,0,0.1)",
+            transition: "box-shadow 0.2s",
+            "&:hover": {
+              boxShadow: isPlaying || isDragging
+                ? undefined
+                : "0 4px 8px rgba(0,0,0,0.15)",
+            },
+            "&:active": {
+              cursor: isPlaying ? "default" : "grabbing",
+            },
+          }}
+        />
+      </motion.div>
+    </Box>
+  );
+};
 
 /**
  * 사다리 타기 게임 페이지
@@ -38,9 +131,21 @@ const Ladder = () => {
   const [highlightedPaths, setHighlightedPaths] = useState<Set<string>>(
     new Set()
   );
+  const [activeId, setActiveId] = useState<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+
+  /**
+   * DnD Kit 센서 설정
+   */
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // 사다리 구조 생성
   const ladderStructure = useMemo(() => {
@@ -376,6 +481,40 @@ const Ladder = () => {
     setParticipants(allUsers);
   }, [allUsers]);
 
+  /**
+   * 드래그 시작
+   */
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  }, []);
+
+  /**
+   * 드래그 종료
+   */
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (over && active.id !== over.id) {
+        setParticipants((items) => {
+          const oldIndex = items.indexOf(active.id as string);
+          const newIndex = items.indexOf(over.id as string);
+          return arrayMove(items, oldIndex, newIndex);
+        });
+      }
+
+      setActiveId(null);
+    },
+    []
+  );
+
+  /**
+   * 드래그 취소
+   */
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+  }, []);
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Stack spacing={2}>
@@ -434,44 +573,58 @@ const Ladder = () => {
               {loading ? (
                 <CircularProgress size={24} />
               ) : participants.length > 0 ? (
-                <Reorder.Group
-                  axis="x"
-                  values={participants}
-                  onReorder={setParticipants}
-                  as="div"
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={handleDragCancel}
                 >
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {participants.map((user) => (
-                      <Reorder.Item
-                        key={user}
-                        value={user}
-                        as="div"
-                        style={{ listStyle: "none" }}
+                  <SortableContext
+                    items={participants}
+                    strategy={rectSortingStrategy}
+                  >
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        gap: 1,
+                      }}
+                    >
+                      {participants.map((user) => (
+                        <SortableItem
+                          key={user}
+                          id={user}
+                          isPlaying={isPlaying}
+                          onRemove={handleRemoveParticipant}
+                        />
+                      ))}
+                    </Box>
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeId ? (
+                      <Box
+                        sx={{
+                          opacity: 0.8,
+                          transform: "rotate(3deg) scale(1.05)",
+                        }}
                       >
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Chip
-                            label={user}
-                            color="primary"
-                            variant="outlined"
-                            onDelete={
-                              isPlaying
-                                ? undefined
-                                : () => handleRemoveParticipant(user)
-                            }
-                            deleteIcon={<CloseIcon />}
-                            sx={{ cursor: isPlaying ? "default" : "grab" }}
-                          />
-                        </motion.div>
-                      </Reorder.Item>
-                    ))}
-                  </Box>
-                </Reorder.Group>
+                        <Chip
+                          label={activeId}
+                          color="primary"
+                          variant="outlined"
+                          sx={{
+                            fontSize: "0.85rem",
+                            py: 1.2,
+                            px: 2,
+                            boxShadow: "0 10px 20px rgba(0,0,0,0.3)",
+                            cursor: "grabbing",
+                          }}
+                        />
+                      </Box>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               ) : (
                 <Alert severity="info">참가자가 없습니다.</Alert>
               )}

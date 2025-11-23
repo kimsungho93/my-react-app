@@ -65,7 +65,7 @@ src/
 | **캘린더**       | **React Big Calendar** (일정 표시, 이벤트 관리)                                                      | 캘린더 UI 직접 구현                               |
 | **3D/그래픽**    | **Three.js + React Three Fiber** (선언적 3D 렌더링)                                                  | Three.js 명령형 방식 직접 사용                    |
 | **오디오**       | **Howler.js** (사운드 재생, 볼륨 제어, 페이드 효과)                                                  | `<audio>` 태그 직접 조작                          |
-| **드래그 앤 드롭** | **React Draggable** (요소 드래그 이동)                                                                | 드래그 이벤트 직접 핸들링                         |
+| **드래그 앤 드롭** | **@dnd-kit/core + @dnd-kit/sortable** (정렬/재배치), **React Draggable** (단순 이동)                 | 드래그 이벤트 직접 핸들링                         |
 | **최적화**       | **React.memo**, **useMemo**, **useCallback**, **Error Boundaries**, **Code Splitting**, 안정적인 key | Inline 함수, index as key                         |
 
 ### 2.3. 명명 규칙 (Naming Conventions)
@@ -136,6 +136,11 @@ src/
 | **캘린더/일정** | React Big Calendar | `<Calendar events={...} />` |
 | **3D 렌더링** | React Three Fiber | `<Canvas><mesh /></Canvas>` |
 | **사운드 재생** | Howler.js | `new Howl({ src: ['sound.mp3'] })` |
-| **드래그 앤 드롭** | React Draggable | `<Draggable><div>...</div></Draggable>` |
+| **정렬/재배치 드래그** | @dnd-kit/core + @dnd-kit/sortable | `<DndContext><SortableContext items={...}>` |
+| **단순 드래그 이동** | React Draggable | `<Draggable><div>...</div></Draggable>` |
 
 **중요**: 위 기능을 구현할 때 네이티브 API(fetch, WebSocket, Date 등)나 직접 구현 대신 **반드시 해당 라이브러리**를 사용하세요.
+
+**드래그 앤 드롭 선택 가이드**:
+- 리스트/그리드 아이템 정렬, 순서 변경 → **@dnd-kit** 사용
+- 단순 요소 위치 이동 (예: 드래그 가능한 모달) → **React Draggable** 사용
