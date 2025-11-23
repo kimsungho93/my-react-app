@@ -8,6 +8,8 @@ import Roulette from "../pages/Game/Roulette";
 import ChatList from "../pages/Community/ChatList";
 import ChatCreate from "../pages/Community/ChatCreate";
 import BoardList from "../pages/Community/BoardList";
+import BoardCreate from "../pages/Community/BoardCreate";
+import BoardDetail from "../pages/Community/BoardDetail";
 import FeedList from "../pages/Community/FeedList";
 import CreateSuggestion from "../pages/CustomerService/CreateSuggestion";
 import SuggestionList from "../pages/CustomerService/SuggestionList";
@@ -66,6 +68,14 @@ export const router = createBrowserRouter([
           {
             path: "community/board/list",
             element: <BoardList />,
+          },
+          {
+            path: "community/board/create",
+            element: <BoardCreate />,
+          },
+          {
+            path: "community/board/:id",
+            element: <BoardDetail />,
           },
           {
             path: "community/feed/list",

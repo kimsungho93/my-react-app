@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Drawer,
   List,
@@ -9,9 +9,12 @@ import {
   Badge,
   Box,
   Divider,
+  Modal,
+  Backdrop,
 } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import type { MenuItem } from "../../types/menu.types";
 import { MENU_DATA } from "../../utils/menuData";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";
@@ -35,6 +38,9 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
 
     // Redux에서 열린 메뉴 상태 가져오기
     const openMenus = useAppSelector((state) => state.layout.openMenus);
+
+    // 로고 모달 상태
+    const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
     /**
      * 하위 메뉴 토글 핸들러
@@ -183,57 +189,135 @@ export const VerticalNav: React.FC<VerticalNavProps> = React.memo(
     );
 
     return (
-      <Drawer
-        variant="temporary" // 모바일 전용: 임시 드로어
-        open={!collapsed} // collapsed가 false일 때 드로어 열림
-        onClose={onClose} // 백드롭 클릭 시 닫기
-        ModalProps={{
-          keepMounted: true, // 모바일 성능 최적화
-        }}
-        sx={{
-          display: "block", // 모바일 전용으로 항상 표시
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          "& .MuiDrawer-paper": {
-            width: drawerWidth, // 모바일에서는 항상 펼쳐진 상태
-            maxWidth: "80vw", // 화면의 80% 이하
-            boxSizing: "border-box",
-            overflowX: "hidden",
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-          },
-        }}
-      >
-        {/* 로고 영역 */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 56, // 모바일 헤더 높이와 동일
-            px: 2,
-            cursor: "pointer",
+      <>
+        <Drawer
+          variant="temporary" // 모바일 전용: 임시 드로어
+          open={!collapsed} // collapsed가 false일 때 드로어 열림
+          onClose={onClose} // 백드롭 클릭 시 닫기
+          ModalProps={{
+            keepMounted: true, // 모바일 성능 최적화
           }}
-          onClick={() => navigate("/")}
+          sx={{
+            display: "block", // 모바일 전용으로 항상 표시
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            "& .MuiDrawer-paper": {
+              width: drawerWidth, // 모바일에서는 항상 펼쳐진 상태
+              maxWidth: "80vw", // 화면의 80% 이하
+              boxSizing: "border-box",
+              overflowX: "hidden",
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+            },
+          }}
         >
+          {/* 로고 영역 */}
           <Box
-            component="img"
-            src="/logo.png"
-            alt="Logo"
             sx={{
-              height: 40,
-              width: "auto",
-              maxWidth: "100%",
-              objectFit: "contain",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 56, // 모바일 헤더 높이와 동일
+              px: 2,
+              cursor: "pointer",
             }}
-          />
-        </Box>
+            onClick={() => setIsLogoModalOpen(true)}
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <Box
+                component="img"
+                src="/logo.png"
+                alt="Logo"
+                sx={{
+                  height: 40,
+                  width: "auto",
+                  maxWidth: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </motion.div>
+          </Box>
 
-        <Divider />
+          <Divider />
 
-        {/* 메뉴 리스트 */}
-        <List sx={{ pt: 1, pb: 2 }}>
-          {MENU_DATA.map((item) => renderMenuItem(item))}
-        </List>
-      </Drawer>
+          {/* 메뉴 리스트 */}
+          <List sx={{ pt: 1, pb: 2 }}>
+            {MENU_DATA.map((item) => renderMenuItem(item))}
+          </List>
+        </Drawer>
+
+        {/* 로고 확대 모달 */}
+        <AnimatePresence>
+          {isLogoModalOpen && (
+            <Modal
+              open={isLogoModalOpen}
+              onClose={() => setIsLogoModalOpen(false)}
+              closeAfterTransition
+              slots={{ backdrop: Backdrop }}
+              slotProps={{
+                backdrop: {
+                  timeout: 500,
+                  sx: { backgroundColor: "rgba(0, 0, 0, 0.85)" },
+                },
+              }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{
+                  scale: 1,
+                  rotate: 0,
+                  opacity: 1,
+                }}
+                exit={{ scale: 0, rotate: 180, opacity: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                }}
+                style={{
+                  outline: "none",
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
+                }}
+              >
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="/logo.png"
+                    alt="Logo"
+                    onClick={() => setIsLogoModalOpen(false)}
+                    sx={{
+                      width: "auto",
+                      height: "auto",
+                      maxWidth: "90vw",
+                      maxHeight: "90vh",
+                      objectFit: "contain",
+                      cursor: "pointer",
+                      filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))",
+                    }}
+                  />
+                </motion.div>
+              </motion.div>
+            </Modal>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 );
