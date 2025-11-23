@@ -56,8 +56,32 @@ export class ChatWebSocketClient {
       this.baseUrl = "";  // 상대 경로 사용 (Vite 프록시를 통해 /ws -> http://localhost:8080/ws)
     } else {
       // 프로덕션 환경에서는 절대 경로 사용
-      const apiUrl = baseUrl || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-      this.baseUrl = apiUrl.replace("/api", "");
+      // VITE_API_BASE_URL이 https://example.com/api 형태인 경우 /api 제거
+      let apiUrl = baseUrl || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+      // URL에서 /api 경로 제거하여 베이스 URL만 추출
+      // 예: https://ibs-kimsh-production.up.railway.app/api -> https://ibs-kimsh-production.up.railway.app
+      if (apiUrl.endsWith("/api")) {
+        apiUrl = apiUrl.slice(0, -4);
+      } else {
+        apiUrl = apiUrl.replace("/api", "");
+      }
+
+      // HTTPS URL을 사용하도록 보장 (http:// -> https://)
+      // 프로덕션 환경에서는 보안 연결 필수
+      if (apiUrl.startsWith("http://") && !apiUrl.includes("localhost")) {
+        apiUrl = apiUrl.replace("http://", "https://");
+        console.warn('[WebSocket] HTTP URL을 HTTPS로 변경:', apiUrl);
+      }
+
+      this.baseUrl = apiUrl;
+
+      // 디버깅: WebSocket 연결 URL 확인 (프로덕션)
+      console.log('[WebSocket] Environment:', import.meta.env.MODE);
+      console.log('[WebSocket] Original API URL:', import.meta.env.VITE_API_BASE_URL);
+      console.log('[WebSocket] Base URL:', this.baseUrl);
+      console.log('[WebSocket] Full WebSocket URL:', `${this.baseUrl}/ws/chat`);
+      console.log('[WebSocket] Protocol:', this.baseUrl.startsWith('https') ? 'WSS (Secure)' : 'WS (Insecure)');
     }
   }
 
