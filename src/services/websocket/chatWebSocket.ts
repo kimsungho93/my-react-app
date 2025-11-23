@@ -80,7 +80,7 @@ export class ChatWebSocketClient {
       console.log('[WebSocket] Environment:', import.meta.env.MODE);
       console.log('[WebSocket] Original API URL:', import.meta.env.VITE_API_BASE_URL);
       console.log('[WebSocket] Base URL:', this.baseUrl);
-      console.log('[WebSocket] Full WebSocket URL:', `${this.baseUrl}/ws/chat`);
+      console.log('[WebSocket] Full WebSocket URL:', `${this.baseUrl}/wss/chat`);
       console.log('[WebSocket] Protocol:', this.baseUrl.startsWith('https') ? 'WSS (Secure)' : 'WS (Insecure)');
     }
   }
@@ -98,7 +98,7 @@ export class ChatWebSocketClient {
 
     this.client = new Client({
       // SockJS를 통한 WebSocket 연결
-      webSocketFactory: () => new SockJS(`${this.baseUrl}/ws/chat`) as WebSocket,
+      webSocketFactory: () => new SockJS(`${this.baseUrl}/wss/chat`) as WebSocket,
 
       // 연결 성공 콜백
       onConnect: () => {
