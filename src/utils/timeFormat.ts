@@ -2,25 +2,13 @@ import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 /**
- * UTC 시간 문자열을 한국 시간(KST, UTC+9)으로 변환
- * 서버에서 UTC 시간을 보내는 경우를 대비하여 한국 시간대로 보정
+ * 서버 시간을 브라우저 로컬 시간으로 변환
+ * 서버에서 보낸 시간 문자열을 그대로 Date 객체로 변환하여 사용
  */
 const toKoreanTime = (dateString: string): Date => {
-  const date = new Date(dateString);
-
-  // Date 객체가 이미 로컬 시간대를 고려하는지 확인
-  // ISO 8601 형식(예: "2025-01-15T12:00:00Z")인 경우 UTC로 해석됨
-  // "Z" 접미사가 있거나 "+00:00" 같은 오프셋이 있으면 UTC로 간주
-  const isUTC = dateString.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateString);
-
-  if (isUTC) {
-    // UTC 시간을 한국 시간(UTC+9)으로 변환
-    const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로
-    return new Date(date.getTime() + kstOffset);
-  }
-
-  // 이미 로컬 시간이면 그대로 사용
-  return date;
+  // Date 객체는 자동으로 로컬 시간대를 고려하여 표시
+  // 서버에서 UTC나 다른 시간대로 보내더라도 브라우저가 자동 변환
+  return new Date(dateString);
 };
 
 /**
