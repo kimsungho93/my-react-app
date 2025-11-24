@@ -39,7 +39,7 @@ function DraggablePaper(props: React.ComponentProps<typeof Paper> & { isMobile: 
     <Draggable
       nodeRef={nodeRef}
       handle="#draggable-dialog-title"
-      cancel={'[class*="MuiDialogContent-root"]'}
+      cancel={'[class*="MuiDialogContent-root"], [class*="MuiIconButton-root"], .modal-close-button'}
     >
       <Paper ref={nodeRef} {...paperProps} />
     </Draggable>
@@ -85,10 +85,9 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
     };
 
     /**
-     * 닫기 버튼 클릭 핸들러 (이벤트 전파 중지)
+     * 닫기 버튼 클릭 핸들러
      */
-    const handleClose = (e: React.MouseEvent) => {
-      e.stopPropagation();
+    const handleCloseClick = () => {
       onClose();
     };
 
@@ -98,6 +97,8 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
         onClose={onClose}
         maxWidth="md"
         fullWidth
+        disableRestoreFocus={isMobile}
+        disableEnforceFocus={isMobile}
         PaperComponent={(props) => <DraggablePaper {...props} isMobile={isMobile} />}
         PaperProps={{
           sx: {
@@ -115,6 +116,9 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
             alignItems: "center",
             pb: 2,
             cursor: isMobile ? "default" : "move", // 모바일에서는 일반 커서
+            userSelect: isMobile ? "none" : undefined, // 모바일에서 텍스트 선택 방지
+            WebkitUserSelect: isMobile ? "none" : undefined,
+            WebkitTouchCallout: isMobile ? "none" : undefined, // iOS 롱프레스 메뉴 방지
           }}
         >
           <Box>
@@ -134,16 +138,22 @@ export const BudgetUsageModal = React.memo<BudgetUsageModalProps>(
             />
           </Box>
           <IconButton
-            onClick={handleClose}
+            onClick={handleCloseClick}
             size="small"
+            className="modal-close-button"
+            disableRipple={false}
             sx={{
               color: "text.secondary",
-              minWidth: 44, // 모바일 터치 영역
+              minWidth: 44, // 모바일 터치 영역 (최소 44x44px)
               minHeight: 44,
+              padding: 1.5,
+              "&:active": {
+                backgroundColor: "action.selected",
+              },
             }}
             aria-label="닫기"
           >
-            <CloseIcon />
+            <CloseIcon fontSize="medium" />
           </IconButton>
         </DialogTitle>
 

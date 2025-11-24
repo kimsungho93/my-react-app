@@ -25,7 +25,7 @@ function DraggablePaper(props: React.ComponentProps<typeof Paper>) {
     <Draggable
       nodeRef={nodeRef}
       handle="#draggable-deduct-dialog-title"
-      cancel={'[class*="MuiDialogContent-root"]'}
+      cancel={'[class*="MuiDialogContent-root"], .modal-close-btn'}
     >
       <Paper ref={nodeRef} {...props} />
     </Draggable>
@@ -239,6 +239,7 @@ export const BudgetDeductModal = React.memo<BudgetDeductModalProps>(
             onClick={handleClose}
             size="small"
             disabled={loading}
+            className="modal-close-btn"
             sx={{
               color: "text.secondary",
             }}
