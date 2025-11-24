@@ -2,11 +2,33 @@ import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 /**
+ * UTC 시간 문자열을 한국 시간(KST, UTC+9)으로 변환
+ * 서버에서 UTC 시간을 보내는 경우를 대비하여 한국 시간대로 보정
+ */
+const toKoreanTime = (dateString: string): Date => {
+  const date = new Date(dateString);
+
+  // Date 객체가 이미 로컬 시간대를 고려하는지 확인
+  // ISO 8601 형식(예: "2025-01-15T12:00:00Z")인 경우 UTC로 해석됨
+  // "Z" 접미사가 있거나 "+00:00" 같은 오프셋이 있으면 UTC로 간주
+  const isUTC = dateString.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateString);
+
+  if (isUTC) {
+    // UTC 시간을 한국 시간(UTC+9)으로 변환
+    const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로
+    return new Date(date.getTime() + kstOffset);
+  }
+
+  // 이미 로컬 시간이면 그대로 사용
+  return date;
+};
+
+/**
  * 상대 시간 포맷 유틸리티
  * "방금 전", "5분 전", "2시간 전", "3일 전" 등의 형식으로 반환
  */
 export const getRelativeTime = (dateString: string): string => {
-  const target = new Date(dateString);
+  const target = toKoreanTime(dateString);
   const now = new Date();
   const diffSec = Math.floor((now.getTime() - target.getTime()) / 1000);
 
@@ -23,14 +45,15 @@ export const getRelativeTime = (dateString: string): string => {
 };
 
 /**
- * 채팅 메시지 시간 포맷 유틸리티
+ * 채팅 메시지 시간 포맷 유틸리티 (한국 시간 기준)
  * 오늘: "오후 1:33"
  * 어제: "어제 오후 1:33"
  * 그 외: "2024.01.15 오후 1:33"
  */
 export const formatChatTime = (dateString: string): string => {
   try {
-    const target = new Date(dateString);
+    // 한국 시간으로 변환
+    const target = toKoreanTime(dateString);
 
     // 유효하지 않은 날짜 체크
     if (isNaN(target.getTime())) {
@@ -61,14 +84,15 @@ export const formatChatTime = (dateString: string): string => {
 };
 
 /**
- * 날짜 구분선용 포맷 유틸리티
+ * 날짜 구분선용 포맷 유틸리티 (한국 시간 기준)
  * 오늘: "오늘"
  * 어제: "어제"
  * 그 외: "2025년 1월 15일 수요일"
  */
 export const formatDateSeparator = (dateString: string): string => {
   try {
-    const target = new Date(dateString);
+    // 한국 시간으로 변환
+    const target = toKoreanTime(dateString);
 
     // 유효하지 않은 날짜 체크
     if (isNaN(target.getTime())) {
@@ -90,12 +114,13 @@ export const formatDateSeparator = (dateString: string): string => {
 };
 
 /**
- * 두 날짜가 같은 날인지 확인
+ * 두 날짜가 같은 날인지 확인 (한국 시간 기준)
  */
 export const isSameDay = (date1: string | Date, date2: string | Date): boolean => {
   try {
-    const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
-    const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+    // 문자열인 경우 한국 시간으로 변환
+    const d1 = typeof date1 === 'string' ? toKoreanTime(date1) : date1;
+    const d2 = typeof date2 === 'string' ? toKoreanTime(date2) : date2;
 
     return (
       d1.getFullYear() === d2.getFullYear() &&
