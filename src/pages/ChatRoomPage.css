@@ -199,6 +199,51 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ===== 날짜 구분선 ===== */
+.date-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  margin: 8px 0;
+}
+
+.date-separator-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent
+  );
+}
+
+.chat-room-page.dark .date-separator-line {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent
+  );
+}
+
+.date-separator-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 4px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chat-room-page.dark .date-separator-text {
+  color: #999;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
 /* ===== 시스템 메시지 ===== */
 .system-message {
   text-align: center;

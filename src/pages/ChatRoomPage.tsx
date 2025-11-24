@@ -6,7 +6,7 @@ import { chatApi } from "../services/api/chatApi";
 import { useAppSelector } from "../hooks/useRedux";
 import { ConnectionStatus } from "../services/websocket/chatWebSocket";
 import { MessageType, type ChatMessage } from "../types/chat.types";
-import { formatChatTime } from "../utils/timeFormat";
+import { formatChatTime, formatDateSeparator, isSameDay } from "../utils/timeFormat";
 import ConfirmModal from "../components/common/ConfirmModal";
 import AlertModal from "../components/common/AlertModal";
 import "./ChatRoomPage.css";
@@ -92,7 +92,13 @@ export default function ChatRoomPage() {
         }
       }
 
-      return [...prev, messageWithDefaults];
+      // 메시지 추가 후 createdAt 기준 오름차순 정렬 (오래된 메시지가 위로, 최신 메시지가 아래로)
+      const newMessages = [...prev, messageWithDefaults];
+      return newMessages.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeA - timeB;
+      });
     });
   }, []);
 
@@ -140,10 +146,18 @@ export default function ChatRoomPage() {
         try {
           const historyResponse = await chatApi.getChatMessages(roomId, 0, 50);
           const messages = historyResponse?.messages || [];
-          setAllMessages(messages);
+
+          // createdAt 기준 오름차순 정렬 (오래된 메시지가 위로, 최신 메시지가 아래로)
+          const sortedMessages = [...messages].sort((a, b) => {
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return timeA - timeB;
+          });
+
+          setAllMessages(sortedMessages);
 
           // 로드된 메시지들의 ID를 처리 완료 목록에 추가
-          messages.forEach(msg => {
+          sortedMessages.forEach(msg => {
             if (msg.id) {
               processedMessageIdsRef.current.add(msg.id);
             }
@@ -171,11 +185,17 @@ export default function ChatRoomPage() {
 
 
   /**
-   * 자동 스크롤 (새 메시지 수신 시)
+   * 자동 스크롤 (새 메시지 수신 시 & 초기 로드 완료 시)
    */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allMessages]);
+    // 로딩이 완료되면 스크롤을 최하단으로 이동
+    if (!isLoadingHistory && allMessages.length > 0) {
+      // 약간의 지연을 주어 DOM이 완전히 렌더링된 후 스크롤
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [allMessages, isLoadingHistory]);
 
   /**
    * 메시지 전송 핸들러
@@ -218,6 +238,37 @@ export default function ChatRoomPage() {
         type: 'error',
       });
     }
+  };
+
+  /**
+   * 날짜 구분선이 필요한지 확인
+   */
+  const shouldShowDateSeparator = (currentMessage: ChatMessage, index: number): boolean => {
+    if (index === 0) return true; // 첫 번째 메시지는 항상 날짜 표시
+
+    const previousMessage = allMessages[index - 1];
+    if (!currentMessage.createdAt || !previousMessage.createdAt) return false;
+
+    // 이전 메시지와 날짜가 다르면 구분선 표시
+    return !isSameDay(currentMessage.createdAt, previousMessage.createdAt);
+  };
+
+  /**
+   * 날짜 구분선 렌더링
+   */
+  const renderDateSeparator = (dateString: string) => {
+    return (
+      <motion.div
+        className="date-separator"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="date-separator-line"></div>
+        <span className="date-separator-text">{formatDateSeparator(dateString)}</span>
+        <div className="date-separator-line"></div>
+      </motion.div>
+    );
   };
 
   /**
@@ -333,7 +384,16 @@ export default function ChatRoomPage() {
           </div>
         ) : (
           <AnimatePresence>
-            {allMessages?.map((message) => renderMessage(message))}
+            {allMessages?.map((message, index) => (
+              <div key={`${message.id}-wrapper`}>
+                {/* 날짜가 바뀌면 구분선 표시 */}
+                {shouldShowDateSeparator(message, index) && message.createdAt && (
+                  renderDateSeparator(message.createdAt)
+                )}
+                {/* 메시지 렌더링 */}
+                {renderMessage(message)}
+              </div>
+            ))}
           </AnimatePresence>
         )}
         <div ref={messagesEndRef} />
