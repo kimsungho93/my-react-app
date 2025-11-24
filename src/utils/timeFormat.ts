@@ -2,13 +2,17 @@ import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 /**
- * 서버 시간을 브라우저 로컬 시간으로 변환
- * 서버에서 보낸 시간 문자열을 그대로 Date 객체로 변환하여 사용
+ * 백엔드 날짜 문자열을 Date 객체로 변환
+ * 백엔드에서 "yyyy-MM-dd HH:mm:ss" 형식으로 한국 시간(KST)을 보내므로,
+ * 이를 ISO 8601 형식으로 변환한 후 Date 객체로 파싱
  */
-const toKoreanTime = (dateString: string): Date => {
-  // Date 객체는 자동으로 로컬 시간대를 고려하여 표시
-  // 서버에서 UTC나 다른 시간대로 보내더라도 브라우저가 자동 변환
-  return new Date(dateString);
+const parseBackendDate = (dateString: string): Date => {
+  // "yyyy-MM-dd HH:mm:ss" 형식을 "yyyy-MM-ddTHH:mm:ss" (ISO 8601) 형식으로 변환
+  // 공백을 'T'로 치환하여 표준 형식으로 만듦
+  const isoString = dateString.replace(' ', 'T');
+
+  // Date 객체로 변환 (로컬 시간대로 해석됨)
+  return new Date(isoString);
 };
 
 /**
@@ -16,7 +20,7 @@ const toKoreanTime = (dateString: string): Date => {
  * "방금 전", "5분 전", "2시간 전", "3일 전" 등의 형식으로 반환
  */
 export const getRelativeTime = (dateString: string): string => {
-  const target = toKoreanTime(dateString);
+  const target = parseBackendDate(dateString);
   const now = new Date();
   const diffSec = Math.floor((now.getTime() - target.getTime()) / 1000);
 
@@ -40,8 +44,8 @@ export const getRelativeTime = (dateString: string): string => {
  */
 export const formatChatTime = (dateString: string): string => {
   try {
-    // 한국 시간으로 변환
-    const target = toKoreanTime(dateString);
+    // 백엔드 날짜 문자열을 Date 객체로 변환
+    const target = parseBackendDate(dateString);
 
     // 유효하지 않은 날짜 체크
     if (isNaN(target.getTime())) {
@@ -79,8 +83,8 @@ export const formatChatTime = (dateString: string): string => {
  */
 export const formatDateSeparator = (dateString: string): string => {
   try {
-    // 한국 시간으로 변환
-    const target = toKoreanTime(dateString);
+    // 백엔드 날짜 문자열을 Date 객체로 변환
+    const target = parseBackendDate(dateString);
 
     // 유효하지 않은 날짜 체크
     if (isNaN(target.getTime())) {
@@ -106,9 +110,9 @@ export const formatDateSeparator = (dateString: string): string => {
  */
 export const isSameDay = (date1: string | Date, date2: string | Date): boolean => {
   try {
-    // 문자열인 경우 한국 시간으로 변환
-    const d1 = typeof date1 === 'string' ? toKoreanTime(date1) : date1;
-    const d2 = typeof date2 === 'string' ? toKoreanTime(date2) : date2;
+    // 문자열인 경우 백엔드 날짜 형식을 파싱
+    const d1 = typeof date1 === 'string' ? parseBackendDate(date1) : date1;
+    const d2 = typeof date2 === 'string' ? parseBackendDate(date2) : date2;
 
     return (
       d1.getFullYear() === d2.getFullYear() &&
