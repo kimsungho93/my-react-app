@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Container,
@@ -11,6 +11,7 @@ import {
   Divider,
   IconButton,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -22,135 +23,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ReplyIcon from "@mui/icons-material/Reply";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-
-type BoardCategory = "notice" | "free" | "humor" | "knowledge";
-
-/**
- * 게시글 타입
- */
-interface Post {
-  id: number;
-  category: BoardCategory;
-  title: string;
-  content: string;
-  author: string;
-  authorAvatar?: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-  views: number;
-  isNew?: boolean;
-}
-
-/**
- * 댓글 타입
- */
-interface Comment {
-  id: number;
-  postId: number;
-  author: string;
-  content: string;
-  createdAt: Date;
-  parentId: number | null; // null이면 댓글, 숫자면 대댓글
-}
-
-/**
- * Mock 데이터 (BoardList와 동일)
- */
-const MOCK_POSTS: Post[] = [
-  {
-    id: 1,
-    category: "notice",
-    title: "2025년 1월 정기 업데이트 안내",
-    content: "다음 주 월요일 새벽 2시부터 4시까지 서버 점검이 예정되어 있습니다.",
-    author: "관리자",
-    createdAt: new Date(Date.now() - 1000 * 60 * 30),
-    likes: 45,
-    comments: 12,
-    views: 324,
-    isNew: true,
-  },
-  {
-    id: 11,
-    category: "free",
-    title: "오늘 점심 뭐 먹을까요?",
-    content: "회사 근처 맛집 추천해주세요! 한식, 중식, 일식 다 좋아요",
-    author: "점심고민러",
-    createdAt: new Date(Date.now() - 1000 * 60 * 45),
-    likes: 23,
-    comments: 56,
-    views: 234,
-    isNew: true,
-  },
-  {
-    id: 2,
-    category: "humor",
-    title: "오늘 회사에서 있었던 웃긴 일 ㅋㅋㅋ",
-    content: "점심시간에 사장님이 엘리베이터에서...",
-    author: "김철수",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    likes: 128,
-    comments: 34,
-    views: 892,
-  },
-  {
-    id: 3,
-    category: "knowledge",
-    title: "React 19 새로운 기능 정리",
-    content: "React 19에서 추가된 주요 기능들을 정리해봤습니다.",
-    author: "개발자A",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    likes: 89,
-    comments: 23,
-    views: 567,
-  },
-];
-
-/**
- * Mock 댓글 데이터
- */
-const INITIAL_MOCK_COMMENTS: Comment[] = [
-  {
-    id: 1,
-    postId: 2,
-    author: "댓글러1",
-    content: "ㅋㅋㅋㅋ 재밌네요!",
-    createdAt: new Date(Date.now() - 1000 * 60 * 30),
-    parentId: null,
-  },
-  {
-    id: 2,
-    postId: 2,
-    author: "댓글러2",
-    content: "사장님 반응이 궁금하네요 ㅎㅎ",
-    createdAt: new Date(Date.now() - 1000 * 60 * 25),
-    parentId: null,
-  },
-  {
-    id: 3,
-    postId: 2,
-    author: "김철수",
-    content: "다행히 못 들으신 것 같아요 ㅋㅋ",
-    createdAt: new Date(Date.now() - 1000 * 60 * 20),
-    parentId: 2,
-  },
-  {
-    id: 4,
-    postId: 2,
-    author: "구경꾼",
-    content: "저도 비슷한 경험 있어요!",
-    createdAt: new Date(Date.now() - 1000 * 60 * 15),
-    parentId: null,
-  },
-  {
-    id: 5,
-    postId: 3,
-    author: "React개발자",
-    content: "정리 감사합니다!",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60),
-    parentId: null,
-  },
-];
+import { boardApi } from "../../services/api/board.api";
+import type { Post, Comment } from "../../services/api/board.api";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store";
 
 /**
  * 게시글 상세 조회 페이지
@@ -158,32 +34,84 @@ const INITIAL_MOCK_COMMENTS: Comment[] = [
 const BoardDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [isLiked, setIsLiked] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(INITIAL_MOCK_COMMENTS);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState("");
 
-  // Mock 데이터에서 게시글 찾기
-  const post = MOCK_POSTS.find((p) => p.id === Number(id));
+  // StrictMode에서 중복 호출 방지
+  const hasFetched = useRef(false);
 
-  // 현재 게시글의 댓글만 필터링
-  const postComments = comments.filter((c) => c.postId === Number(id));
+  /**
+   * 게시글 및 댓글 데이터 조회
+   */
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
 
-  // 댓글 (parentId가 null인 것)
-  const mainComments = postComments.filter((c) => c.parentId === null);
+      // 이미 조회했으면 스킵 (StrictMode 중복 방지)
+      if (hasFetched.current) return;
+      hasFetched.current = true;
 
-  // 대댓글 가져오기
-  const getReplies = (commentId: number) => {
-    return postComments.filter((c) => c.parentId === commentId);
+      setLoading(true);
+      setError(null);
+      try {
+        const [postResponse, commentsResponse] = await Promise.all([
+          boardApi.getPostDetail(Number(id)),
+          boardApi.getComments(Number(id))
+        ]);
+
+        setPost(postResponse.data);
+        setComments(commentsResponse.data);
+      } catch (err) {
+        console.error("Failed to fetch board detail:", err);
+        setError("게시글을 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // cleanup 함수에서 ref 초기화 (다른 게시글로 이동 시)
+    return () => {
+      hasFetched.current = false;
+    };
+  }, [id]);
+
+  // 삭제되지 않은 댓글만 필터링 (계층 구조 유지)
+  const filterDeletedComments = (commentList: Comment[]): Comment[] => {
+    return commentList
+      .filter((c) => !c.deleted)
+      .map((c) => ({
+        ...c,
+        children: filterDeletedComments(c.children || []),
+      }));
   };
 
-  if (!post) {
+  // 최상위 댓글만 (parentId가 null)
+  const mainComments = filterDeletedComments(comments);
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 10, textAlign: "center" }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (error || !post) {
     return (
       <Container maxWidth="md" sx={{ py: 3 }}>
         <Paper elevation={2} sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary">
-            게시글을 찾을 수 없습니다.
+            {error || "게시글을 찾을 수 없습니다."}
           </Typography>
           <Button
             variant="contained"
@@ -200,31 +128,33 @@ const BoardDetail = () => {
   /**
    * 카테고리 라벨 가져오기
    */
-  const getCategoryLabel = (cat: BoardCategory) => {
-    switch (cat) {
-      case "notice":
+  const getCategoryLabel = (cat: string) => {
+    switch (cat.toUpperCase()) {
+      case "NOTICE":
         return "공지";
-      case "free":
+      case "FREE":
         return "자유";
-      case "humor":
+      case "HUMOR":
         return "유머";
-      case "knowledge":
+      case "KNOWLEDGE":
         return "지식";
+      default:
+        return "기타";
     }
   };
 
   /**
    * 카테고리 색상 가져오기
    */
-  const getCategoryColor = (cat: BoardCategory) => {
-    switch (cat) {
-      case "notice":
+  const getCategoryColor = (cat: string): "error" | "info" | "success" | "primary" | "default" => {
+    switch (cat.toUpperCase()) {
+      case "NOTICE":
         return "error";
-      case "free":
+      case "FREE":
         return "info";
-      case "humor":
+      case "HUMOR":
         return "success";
-      case "knowledge":
+      case "KNOWLEDGE":
         return "primary";
       default:
         return "default";
@@ -234,65 +164,115 @@ const BoardDetail = () => {
   /**
    * 좋아요 토글
    */
-  const handleLikeToggle = () => {
-    setIsLiked(!isLiked);
-    // TODO: API 연동
+  const handleLikeToggle = async () => {
+    if (!post) return;
+    try {
+      const response = await boardApi.likePost(post.id);
+      setPost({
+        ...post,
+        isLiked: response.data.liked,
+        likeCount: response.data.totalLikes
+      });
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+      alert("좋아요 처리에 실패했습니다.");
+    }
   };
 
   /**
    * 댓글 작성
    */
-  const handleAddComment = () => {
-    if (!newComment.trim()) {
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !post) {
       alert("댓글 내용을 입력해주세요.");
       return;
     }
 
-    const comment: Comment = {
-      id: comments.length + 1,
-      postId: Number(id),
-      author: "현재사용자", // TODO: 실제 로그인 사용자 이름
-      content: newComment,
-      createdAt: new Date(),
-      parentId: null,
-    };
+    try {
+      const response = await boardApi.createComment(post.id, {
+        content: newComment,
+        parentId: null
+      });
+      
+      setComments([...comments, response.data]);
+      setNewComment("");
 
-    setComments([...comments, comment]);
-    setNewComment("");
-    // TODO: API 연동
+      // 댓글 수 업데이트
+      setPost({
+        ...post,
+        commentCount: (post.commentCount ?? 0) + 1
+      });
+    } catch (err) {
+      console.error("Failed to create comment:", err);
+      alert("댓글 작성에 실패했습니다.");
+    }
   };
 
   /**
    * 대댓글 작성
    */
-  const handleAddReply = (parentId: number) => {
-    if (!replyContent.trim()) {
+  const handleAddReply = async (parentId: number) => {
+    if (!replyContent.trim() || !post) {
       alert("답글 내용을 입력해주세요.");
       return;
     }
 
-    const reply: Comment = {
-      id: comments.length + 1,
-      postId: Number(id),
-      author: "현재사용자", // TODO: 실제 로그인 사용자 이름
-      content: replyContent,
-      createdAt: new Date(),
-      parentId: parentId,
-    };
+    try {
+      const response = await boardApi.createComment(post.id, {
+        content: replyContent,
+        parentId: parentId
+      });
+      
+      setComments([...comments, response.data]);
+      setReplyContent("");
+      setReplyingTo(null);
 
-    setComments([...comments, reply]);
-    setReplyContent("");
-    setReplyingTo(null);
-    // TODO: API 연동
+      // 댓글 수 업데이트
+      setPost({
+        ...post,
+        commentCount: (post.commentCount ?? 0) + 1
+      });
+    } catch (err) {
+      console.error("Failed to create reply:", err);
+      alert("답글 작성에 실패했습니다.");
+    }
   };
 
   /**
    * 댓글 삭제
    */
-  const handleDeleteComment = (commentId: number) => {
+  const handleDeleteComment = async (commentId: number) => {
     if (window.confirm("댓글을 삭제하시겠습니까?")) {
-      setComments(comments.filter((c) => c.id !== commentId && c.parentId !== commentId));
-      // TODO: API 연동
+      try {
+        await boardApi.deleteComment(commentId);
+        setComments(comments.filter((c) => c.id !== commentId && c.parentId !== commentId));
+        
+        // 댓글 수 업데이트 (대댓글도 같이 삭제되는지 여부에 따라 로직이 다를 수 있음, 여기선 단순 -1)
+        if (post) {
+           setPost({
+            ...post,
+            commentCount: Math.max(0, (post.commentCount ?? 0) - 1)
+          });
+        }
+      } catch (err) {
+        console.error("Failed to delete comment:", err);
+        alert("댓글 삭제에 실패했습니다.");
+      }
+    }
+  };
+
+  /**
+   * 게시글 삭제
+   */
+  const handleDeletePost = async () => {
+    if (window.confirm("게시글을 삭제하시겠습니까?")) {
+      try {
+        await boardApi.deletePost(post.id);
+        navigate("/community/board/list");
+      } catch (err) {
+        console.error("Failed to delete post:", err);
+        alert("게시글 삭제에 실패했습니다.");
+      }
     }
   };
 
@@ -302,14 +282,27 @@ const BoardDetail = () => {
         {/* 헤더 */}
         <Box sx={{ p: { xs: 2, sm: 3 }, borderBottom: 1, borderColor: "divider" }}>
           <Stack spacing={2}>
-            {/* 뒤로가기 버튼 */}
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate("/community/board/list")}
-              sx={{ alignSelf: "flex-start", minWidth: "auto" }}
-            >
-              목록으로
-            </Button>
+            {/* 뒤로가기 버튼 및 삭제 버튼 */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate("/community/board/list")}
+                sx={{ minWidth: "auto" }}
+              >
+                목록으로
+              </Button>
+              
+              {/* 작성자 본인 또는 관리자일 경우 삭제 버튼 표시 */}
+              {(Number(currentUser?.id) === post.author?.id || currentUser?.role === "ADMIN") && (
+                <Button
+                  startIcon={<DeleteIcon />}
+                  color="error"
+                  onClick={handleDeletePost}
+                >
+                  삭제
+                </Button>
+              )}
+            </Box>
 
             {/* 카테고리 및 NEW 배지 */}
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -354,15 +347,15 @@ const BoardDetail = () => {
             >
               {/* 작성자 정보 */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Avatar sx={{ width: 40, height: 40 }}>
-                  {post.author[0]}
+                <Avatar sx={{ width: 40, height: 40 }} src={post.author?.avatarUrl}>
+                  {post.author?.nickname?.[0] ?? "?"}
                 </Avatar>
                 <Box>
                   <Typography variant="body1" fontWeight={600}>
-                    {post.author}
+                    {post.author?.nickname ?? "익명"}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatDistanceToNow(post.createdAt, {
+                    {formatDistanceToNow(new Date(post.createdAt), {
                       addSuffix: true,
                       locale: ko,
                     })}
@@ -377,7 +370,7 @@ const BoardDetail = () => {
                     sx={{ fontSize: 18, color: "text.secondary" }}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    {post.views}
+                    {post.viewCount ?? 0}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -385,7 +378,7 @@ const BoardDetail = () => {
                     sx={{ fontSize: 18, color: "text.secondary" }}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    {post.likes + (isLiked ? 1 : 0)}
+                    {post.likeCount ?? 0}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -393,7 +386,7 @@ const BoardDetail = () => {
                     sx={{ fontSize: 18, color: "text.secondary" }}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    {postComments.length}
+                    {mainComments.length}
                   </Typography>
                 </Box>
               </Box>
@@ -417,7 +410,7 @@ const BoardDetail = () => {
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: post.content || "" }}
           />
         </Box>
 
@@ -427,16 +420,16 @@ const BoardDetail = () => {
             {/* 좋아요 버튼 */}
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
-                variant={isLiked ? "contained" : "outlined"}
+                variant={post.isLiked ? "contained" : "outlined"}
                 color="primary"
                 startIcon={
-                  isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />
+                  post.isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />
                 }
                 onClick={handleLikeToggle}
                 size="large"
                 sx={{ minWidth: 150 }}
               >
-                좋아요 {post.likes + (isLiked ? 1 : 0)}
+                좋아요 {post.likeCount ?? 0}
               </Button>
             </Box>
 
@@ -445,7 +438,7 @@ const BoardDetail = () => {
             {/* 댓글 영역 */}
             <Box>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                댓글 {postComments.length}
+                댓글 {mainComments.length}
               </Typography>
 
               {/* 댓글 입력 */}
@@ -505,15 +498,15 @@ const BoardDetail = () => {
                           }}
                         >
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Avatar sx={{ width: 32, height: 32 }}>
-                              {comment.author[0]}
+                            <Avatar sx={{ width: 32, height: 32 }} src={comment.author?.avatarUrl}>
+                              {comment.author?.nickname?.[0] ?? "?"}
                             </Avatar>
                             <Box>
                               <Typography variant="body2" fontWeight={600}>
-                                {comment.author}
+                                {comment.author?.nickname ?? "익명"}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {formatDistanceToNow(comment.createdAt, {
+                                {formatDistanceToNow(new Date(comment.createdAt), {
                                   addSuffix: true,
                                   locale: ko,
                                 })}
@@ -527,13 +520,16 @@ const BoardDetail = () => {
                             >
                               <ReplyIcon fontSize="small" />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDeleteComment(comment.id)}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                            {/* 작성자 본인 또는 관리자만 삭제 가능 */}
+                            {(Number(currentUser?.id) === comment.author?.id || currentUser?.role === "ADMIN") && (
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeleteComment(comment.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
                           </Box>
                         </Box>
                         <Typography variant="body2" sx={{ pl: 5 }}>
@@ -576,8 +572,8 @@ const BoardDetail = () => {
                         </Box>
                       )}
 
-                      {/* 대댓글 목록 */}
-                      {getReplies(comment.id).map((reply) => (
+                      {/* 대댓글 목록 (children) */}
+                      {comment.children?.map((reply) => (
                         <Box
                           key={reply.id}
                           sx={{
@@ -601,28 +597,31 @@ const BoardDetail = () => {
                               }}
                             >
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Avatar sx={{ width: 28, height: 28 }}>
-                                  {reply.author[0]}
+                                <Avatar sx={{ width: 28, height: 28 }} src={reply.author?.avatarUrl}>
+                                  {reply.author?.nickname?.[0] ?? "?"}
                                 </Avatar>
                                 <Box>
                                   <Typography variant="body2" fontWeight={600}>
-                                    {reply.author}
+                                    {reply.author?.nickname ?? "익명"}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {formatDistanceToNow(reply.createdAt, {
+                                    {formatDistanceToNow(new Date(reply.createdAt), {
                                       addSuffix: true,
                                       locale: ko,
                                     })}
                                   </Typography>
                                 </Box>
                               </Box>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteComment(reply.id)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                              {/* 작성자 본인 또는 관리자만 삭제 가능 */}
+                              {(Number(currentUser?.id) === reply.author?.id || currentUser?.role === "ADMIN") && (
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteComment(reply.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
                             </Box>
                             <Typography variant="body2" sx={{ pl: 4.5 }}>
                               {reply.content}

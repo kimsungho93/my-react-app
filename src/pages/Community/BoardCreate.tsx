@@ -8,14 +8,15 @@ import {
   Button,
   MenuItem,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RichTextEditor from "../../components/common/RichTextEditor/RichTextEditor";
 import type { RootState } from "../../store";
-
-type BoardCategory = "notice" | "free" | "humor" | "knowledge";
+import { boardApi } from "../../services/api/board.api";
+import type { BoardCategory } from "../../services/api/board.api";
 
 /**
  * 게시글 작성 페이지
@@ -26,6 +27,7 @@ const BoardCreate = () => {
   const [category, setCategory] = useState<BoardCategory>("free");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
    * 사용자가 ADMIN 권한인지 확인
@@ -44,7 +46,7 @@ const BoardCreate = () => {
   /**
    * 게시글 작성 핸들러
    */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // HTML 태그 제거 후 공백 체크
     const strippedContent = stripHtml(content).trim();
     const trimmedTitle = title.trim();
@@ -60,11 +62,22 @@ const BoardCreate = () => {
       return;
     }
 
-    // TODO: API 연동
-    console.log({ category, title, content });
+    setIsSubmitting(true);
+    try {
+      await boardApi.createPost({
+        category: category.toUpperCase(), // 백엔드 ENUM에 맞게 대문자로 변환
+        title: trimmedTitle,
+        content,
+      });
 
-    // 게시글 목록으로 이동
-    navigate("/community/board/list");
+      // 게시글 목록으로 이동
+      navigate("/community/board/list");
+    } catch (err) {
+      console.error("Failed to create post:", err);
+      alert("게시글 작성에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   /**
@@ -100,6 +113,7 @@ const BoardCreate = () => {
             onChange={(e) => setCategory(e.target.value as BoardCategory)}
             fullWidth
             required
+            disabled={isSubmitting}
           >
             {isAdmin && <MenuItem value="notice">공지사항</MenuItem>}
             <MenuItem value="free">자유게시판</MenuItem>
@@ -115,6 +129,7 @@ const BoardCreate = () => {
             placeholder="제목을 입력하세요 (최소 2글자)"
             fullWidth
             required
+            disabled={isSubmitting}
             inputProps={{ maxLength: 100 }}
             helperText={`${title.length} / 100 (최소 2글자)`}
             error={title.length > 0 && title.trim().length < 2}
@@ -143,7 +158,12 @@ const BoardCreate = () => {
             spacing={2}
             sx={{ justifyContent: "flex-end" }}
           >
-            <Button variant="outlined" onClick={handleCancel} size="large">
+            <Button 
+              variant="outlined" 
+              onClick={handleCancel} 
+              size="large"
+              disabled={isSubmitting}
+            >
               취소
             </Button>
             <Button
@@ -151,10 +171,13 @@ const BoardCreate = () => {
               onClick={handleSubmit}
               size="large"
               disabled={
-                title.trim().length < 2 || !stripHtml(content).trim()
+                title.trim().length < 2 || 
+                !stripHtml(content).trim() || 
+                isSubmitting
               }
+              startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
             >
-              작성완료
+              {isSubmitting ? "작성 중..." : "작성완료"}
             </Button>
           </Stack>
         </Stack>
