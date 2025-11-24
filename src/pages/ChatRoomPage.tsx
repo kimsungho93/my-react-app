@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatWebSocket } from "../hooks/useChatWebSocket";
@@ -385,14 +385,14 @@ export default function ChatRoomPage() {
         ) : (
           <AnimatePresence>
             {allMessages?.map((message, index) => (
-              <div key={`${message.id}-wrapper`}>
+              <React.Fragment key={`${message.id}-wrapper`}>
                 {/* 날짜가 바뀌면 구분선 표시 */}
                 {shouldShowDateSeparator(message, index) && message.createdAt && (
                   renderDateSeparator(message.createdAt)
                 )}
                 {/* 메시지 렌더링 */}
                 {renderMessage(message)}
-              </div>
+              </React.Fragment>
             ))}
           </AnimatePresence>
         )}
