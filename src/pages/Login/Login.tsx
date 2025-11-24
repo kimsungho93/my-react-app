@@ -202,6 +202,7 @@ import {
   TextField,
   Button,
   Typography,
+  Alert,
   CircularProgress,
   InputAdornment,
   IconButton,
@@ -213,7 +214,6 @@ import { Visibility, VisibilityOff, Lock, Email } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../hooks/useRedux";
 import { login, clearError } from "../../store/slices/authSlice";
-import AlertModal from "../../components/common/AlertModal";
 
 /**
  * 별 애니메이션 키프레임
@@ -277,7 +277,6 @@ export const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberEmail, setRememberEmail] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // 비밀번호 유효성 검사 추가
   const isPasswordValid = password.length >= 8 && password.length <= 20;
@@ -298,13 +297,6 @@ export const Login = () => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
-
-  // 에러 발생 시 모달 표시
-  useEffect(() => {
-    if (error) {
-      setShowErrorModal(true);
-    }
-  }, [error]);
 
   // 컴포넌트 언마운트 시 에러 초기화
   useEffect(() => {
@@ -342,14 +334,6 @@ export const Login = () => {
    */
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
-  };
-
-  /**
-   * 에러 모달 닫기
-   */
-  const handleCloseErrorModal = () => {
-    setShowErrorModal(false);
-    dispatch(clearError());
   };
 
   return (
@@ -542,6 +526,13 @@ export const Login = () => {
           >
             로그인 해주세요
           </Typography>
+
+          {/* 에러 메시지 */}
+          {error && (
+            <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           {/* 로그인 폼 */}
           <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
@@ -740,16 +731,6 @@ export const Login = () => {
           </Box>
         </Paper>
       </Container>
-
-      {/* 에러 알림 모달 */}
-      <AlertModal
-        isOpen={showErrorModal}
-        title="로그인 실패"
-        message={error || "로그인에 실패했습니다."}
-        type="error"
-        confirmText="확인"
-        onConfirm={handleCloseErrorModal}
-      />
     </Box>
   );
 };
