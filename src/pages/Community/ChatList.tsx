@@ -81,7 +81,7 @@ export default function ChatList() {
   };
 
   /**
-   * 채팅방 입장 핸들러 (더블 클릭)
+   * 채팅방 입장 핸들러
    */
   const handleJoinRoom = async (roomId: string) => {
     const room = rooms.find((r) => r.id === roomId);
@@ -222,7 +222,7 @@ export default function ChatList() {
             <ChatRoomItem
               key={room.id}
               room={room}
-              onDoubleClick={handleJoinRoom}
+              onClick={handleJoinRoom}
               index={index}
             />
           ))}

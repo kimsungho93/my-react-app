@@ -7,8 +7,8 @@ import './ChatRoomItem.css';
 interface ChatRoomItemProps {
   /** 채팅방 정보 */
   room: ChatRoom;
-  /** 더블 클릭 핸들러 */
-  onDoubleClick: (roomId: string) => void;
+  /** 클릭 핸들러 */
+  onClick: (roomId: string) => void;
   /** 목록에서의 인덱스 (애니메이션용) */
   index?: number;
 }
@@ -18,21 +18,16 @@ interface ChatRoomItemProps {
  */
 export default function ChatRoomItem({
   room,
-  onDoubleClick,
+  onClick,
   index = 0,
 }: ChatRoomItemProps) {
   const isDarkMode = useAppSelector((state) => state.theme.mode === 'dark');
 
   /**
-   * 더블 클릭 핸들러
+   * 클릭 핸들러
    */
-  const handleDoubleClick = () => {
-    const confirmed = window.confirm(
-      `"${room.name}" 채팅방에 입장하시겠습니까?`
-    );
-    if (confirmed) {
-      onDoubleClick(room.id);
-    }
+  const handleClick = () => {
+    onClick(room.id);
   };
 
   /**
@@ -48,7 +43,7 @@ export default function ChatRoomItem({
   return (
     <motion.div
       className={`chat-room-item ${isDarkMode ? 'dark' : ''}`}
-      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
