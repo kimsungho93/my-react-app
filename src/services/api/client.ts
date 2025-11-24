@@ -98,7 +98,11 @@ apiClient.interceptors.response.use(
     };
 
     // 401 에러이고, 재시도하지 않은 요청인 경우
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 단, 로그인/회원가입 등 인증이 필요 없는 엔드포인트는 제외
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                           originalRequest.url?.includes('/auth/register');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       // 토큰 갱신 중이면 대기열에 추가
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
