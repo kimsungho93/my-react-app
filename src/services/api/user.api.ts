@@ -19,10 +19,10 @@ export const userApi = {
    * @returns 활성 사용자 이름 목록
    */
   getActiveUserNames: async (): Promise<string[]> => {
-    const response = await apiClient.get<ApiResponse<ActiveUserNamesResponse>>(
+    const response = await apiClient.get<ActiveUserNamesResponse>(
       "/users/active/names"
     );
-    return response.data.data.names;
+    return response.data.names;
   },
 
   /**

@@ -12,13 +12,15 @@ import {
   CircularProgress,
   Container,
   Divider,
+  Fab,
 } from "@mui/material";
 import {
-  Add,
+  Edit,
   AccessTime,
   Person,
   Category as CategoryIcon,
   FilterList,
+  QuestionAnswer,
 } from "@mui/icons-material";
 import { suggestionApi } from "../../services/api/suggestion.api";
 import { SUGGESTION_CATEGORY_LABELS } from "../../types/suggestion.types";
@@ -180,56 +182,17 @@ const SuggestionList = () => {
       }}
     >
       {/* 헤더 */}
-      <Box
-        sx={{
-          bgcolor: "primary.main",
-          color: "white",
-          py: { xs: 2, sm: 3 },
-          px: { xs: 2, sm: 3 },
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          boxShadow: 2,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography variant="h5" fontWeight="bold">
-                건의사항
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-                등록된 건의사항을 확인하세요.
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleCreateClick}
-              size="small"
-              sx={{
-                bgcolor: "white",
-                color: "primary.main",
-                "&:hover": {
-                  bgcolor: "grey.100",
-                },
-                fontSize: { xs: "0.813rem", sm: "0.875rem" },
-                px: { xs: 1.5, sm: 2 },
-                py: { xs: 0.5, sm: 0.75 },
-              }}
-            >
-              작성
-            </Button>
-          </Stack>
-        </Container>
-      </Box>
+      <Container maxWidth="lg" sx={{ pt: 3, pb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <QuestionAnswer color="primary" sx={{ fontSize: 28 }} />
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+            건의/문의
+          </Typography>
+        </Box>
+      </Container>
 
       {/* 필터 */}
-      <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="lg">
         <Stack
           direction="row"
           spacing={1}
@@ -311,7 +274,7 @@ const SuggestionList = () => {
             {statusFilter === "ALL" && (
               <Button
                 variant="contained"
-                startIcon={<Add />}
+                startIcon={<Edit />}
                 onClick={handleCreateClick}
               >
                 첫 건의사항 작성하기
@@ -453,6 +416,21 @@ const SuggestionList = () => {
 
       {/* Toast 알림 */}
       <Toast {...toast} />
+
+      {/* 플로팅 작성 버튼 */}
+      <Fab
+        color="primary"
+        aria-label="create suggestion"
+        onClick={handleCreateClick}
+        sx={{
+          position: "fixed",
+          bottom: { xs: 80, sm: 24 },
+          right: { xs: 16, sm: 24 },
+          zIndex: 1000,
+        }}
+      >
+        <Edit />
+      </Fab>
     </Box>
   );
 };
