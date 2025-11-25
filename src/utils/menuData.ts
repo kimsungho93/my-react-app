@@ -13,7 +13,6 @@ import {
   Chat,
   Article,
   DynamicFeed,
-  ViewList,
   HowToVote,
 } from "@mui/icons-material";
 import type { MenuItem } from "../types/menu.types";
@@ -61,14 +60,7 @@ export const MENU_DATA: MenuItem[] = [
         id: "community-board",
         title: "게시판",
         icon: Article,
-        children: [
-          {
-            id: "community-board-list",
-            title: "게시글 조회",
-            icon: List,
-            path: "/community/board/list",
-          },
-        ],
+        path: "/community/board/list",
       },
       {
         id: "community-vote",
@@ -80,14 +72,7 @@ export const MENU_DATA: MenuItem[] = [
         id: "community-feed",
         title: "피드",
         icon: DynamicFeed,
-        children: [
-          {
-            id: "community-feed-list",
-            title: "피드 조회",
-            icon: ViewList,
-            path: "/community/feed/list",
-          },
-        ],
+        path: "/community/feed/list",
       },
     ],
   },
