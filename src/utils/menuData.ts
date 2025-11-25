@@ -14,6 +14,7 @@ import {
   Article,
   DynamicFeed,
   ViewList,
+  HowToVote,
 } from "@mui/icons-material";
 import type { MenuItem } from "../types/menu.types";
 
@@ -68,6 +69,12 @@ export const MENU_DATA: MenuItem[] = [
             path: "/community/board/list",
           },
         ],
+      },
+      {
+        id: "community-vote",
+        title: "투표",
+        icon: HowToVote,
+        path: "/community/vote/list",
       },
       {
         id: "community-feed",

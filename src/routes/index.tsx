@@ -10,6 +10,9 @@ import ChatCreate from "../pages/Community/ChatCreate";
 import BoardList from "../pages/Community/BoardList";
 import BoardCreate from "../pages/Community/BoardCreate";
 import BoardDetail from "../pages/Community/BoardDetail";
+import VoteList from "../pages/Community/VoteList";
+import VoteDetail from "../pages/Community/VoteDetail";
+import VoteCreate from "../pages/Community/VoteCreate";
 import FeedList from "../pages/Community/FeedList";
 import CreateSuggestion from "../pages/CustomerService/CreateSuggestion";
 import SuggestionList from "../pages/CustomerService/SuggestionList";
@@ -76,6 +79,22 @@ export const router = createBrowserRouter([
           {
             path: "community/board/:id",
             element: <BoardDetail />,
+          },
+          {
+            path: "community/vote/list",
+            element: <VoteList />,
+          },
+          {
+            path: "community/vote/create",
+            element: <VoteCreate />,
+          },
+          {
+            path: "community/vote/edit/:id",
+            element: <VoteCreate />,
+          },
+          {
+            path: "community/vote/:id",
+            element: <VoteDetail />,
           },
           {
             path: "community/feed/list",
