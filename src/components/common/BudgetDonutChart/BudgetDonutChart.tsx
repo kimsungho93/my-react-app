@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useCallback } from "react";
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
@@ -18,6 +18,21 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
   ({ data, onDoubleClick }) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === "dark";
+    const chartRef = useRef<InstanceType<typeof ReactECharts>>(null);
+
+    /**
+     * 더블클릭 핸들러 - 툴팁 숨기고 콜백 실행
+     */
+    const handleDoubleClick = useCallback(() => {
+      // 차트 인스턴스에서 툴팁 숨기기
+      if (chartRef.current) {
+        const chartInstance = chartRef.current.getEchartsInstance();
+        chartInstance.dispatchAction({
+          type: "hideTip",
+        });
+      }
+      onDoubleClick?.();
+    }, [onDoubleClick]);
 
     // ECharts 옵션 메모이제이션
     const chartOption = useMemo<EChartsOption>(() => {
@@ -33,6 +48,9 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
         tooltip: {
           trigger: "item",
           formatter: "{a} <br/>{b}: {c}원 ({d}%)",
+          triggerOn: "mousemove", // 모바일에서 클릭 시 툴팁이 고정되는 문제 방지
+          enterable: false, // 툴팁에 마우스 진입 불가
+          confine: true, // 차트 영역 내에 툴팁 제한
         },
         legend: {
           orient: "horizontal",
@@ -130,7 +148,7 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
 
     return (
       <Box
-        onDoubleClick={onDoubleClick}
+        onDoubleClick={handleDoubleClick}
         sx={{
           height: "100%",
           display: "flex",
@@ -141,6 +159,7 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
         {/* 차트 */}
         <Box sx={{ height: 400, mb: 1 }}>
           <ReactECharts
+            ref={chartRef}
             option={chartOption}
             style={{ height: "100%", width: "100%" }}
             opts={{ renderer: "canvas" }}

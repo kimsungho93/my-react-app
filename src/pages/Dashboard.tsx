@@ -23,8 +23,12 @@ const Dashboard = () => {
   const { departmentBudget, loading, error, usageHistory, usageHistoryLoading } = useAppSelector(
     (state) => state.budget
   );
+  const { user } = useAppSelector((state) => state.auth);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
   const [isDeductModalOpen, setIsDeductModalOpen] = useState(false);
+
+  // 관리자 권한 확인 (role이 ADMIN인 경우만 true)
+  const isAdmin = useMemo(() => user?.role === 'ADMIN', [user]);
 
   // 컴포넌트 마운트 시 현재 년월의 예산 데이터 조회
   useEffect(() => {
@@ -234,20 +238,23 @@ const Dashboard = () => {
                   <Typography variant="h6" fontWeight={600} sx={{ fontSize: "1rem" }}>
                     부서 회식비
                   </Typography>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<AddIcon sx={{ fontSize: "1rem" }} />}
-                    onClick={handleDeductButtonClick}
-                    sx={{
-                      fontSize: "0.75rem", // 모바일: 폰트 크기 축소
-                      py: 0.5,
-                      px: 1.25, // 모바일: 좌우 패딩 축소
-                      minHeight: 32, // 모바일: 버튼 높이 축소
-                    }}
-                  >
-                    사용 입력
-                  </Button>
+                  {/* 관리자 권한이 있는 경우에만 버튼 표시 */}
+                  {isAdmin && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<AddIcon sx={{ fontSize: "1rem" }} />}
+                      onClick={handleDeductButtonClick}
+                      sx={{
+                        fontSize: "0.75rem", // 모바일: 폰트 크기 축소
+                        py: 0.5,
+                        px: 1.25, // 모바일: 좌우 패딩 축소
+                        minHeight: 32, // 모바일: 버튼 높이 축소
+                      }}
+                    >
+                      사용 입력
+                    </Button>
+                  )}
                 </Box>
 
                 {/* 차트 영역 */}

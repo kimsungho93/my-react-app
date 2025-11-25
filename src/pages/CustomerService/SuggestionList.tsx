@@ -333,7 +333,7 @@ const SuggestionList = () => {
                 }}
               >
                 <CardActionArea
-                  onDoubleClick={() => handleSuggestionClick(suggestion.id)}
+                  onClick={() => handleSuggestionClick(suggestion.id)}
                   sx={{ p: { xs: 2, sm: 3 } }}
                 >
                   <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
