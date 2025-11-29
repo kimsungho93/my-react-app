@@ -47,7 +47,10 @@ export const BudgetDonutChart = React.memo<BudgetDonutChartProps>(
       return {
         tooltip: {
           trigger: "item",
-          formatter: "{a} <br/>{b}: {c}원 ({d}%)",
+          formatter: (params: any) => {
+            const value = params.value.toLocaleString();
+            return `${params.seriesName} <br/>${params.name}: ${value}원 (${params.percent}%)`;
+          },
           triggerOn: "mousemove", // 모바일에서 클릭 시 툴팁이 고정되는 문제 방지
           enterable: false, // 툴팁에 마우스 진입 불가
           confine: true, // 차트 영역 내에 툴팁 제한
