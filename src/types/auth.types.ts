@@ -34,6 +34,8 @@ export interface UserInfo {
   email: string;
   name: string;
   role: string;
+  position: string;
+  positionDisplayName: string;
 }
 
 /**
