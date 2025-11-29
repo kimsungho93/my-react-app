@@ -39,6 +39,17 @@ export interface UserInfo {
 }
 
 /**
+ * 비밀번호 변경 요청 데이터
+ * 백엔드에서 이중 검증을 위해 confirmPassword도 전송
+ * currentPassword로 현재 비밀번호 검증
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
  * 인증 상태
  */
 export interface AuthState {

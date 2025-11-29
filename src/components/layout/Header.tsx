@@ -24,6 +24,7 @@ import { toggleCollapse } from "../../store/slices/layoutSlice";
 import { toggleTheme } from "../../store/slices/themeSlice";
 import { logout } from "../../store/slices/authSlice";
 import { ProfileModal } from "../common/ProfileModal";
+import { SettingsModal } from "../common/SettingsModal";
 
 /**
  * 레이아웃 헤더 컴포넌트
@@ -36,6 +37,7 @@ export const Header = React.memo(() => {
   const { user } = useAppSelector((state) => state.auth);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const isDark = mode === "dark";
 
@@ -68,6 +70,17 @@ export const Header = React.memo(() => {
   // 프로필 모달 닫기
   const handleProfileClose = useCallback(() => {
     setProfileModalOpen(false);
+  }, []);
+
+  // 설정 모달 열기
+  const handleSettingsOpen = useCallback(() => {
+    handleUserMenuClose();
+    setSettingsModalOpen(true);
+  }, [handleUserMenuClose]);
+
+  // 설정 모달 닫기
+  const handleSettingsClose = useCallback(() => {
+    setSettingsModalOpen(false);
   }, []);
 
   // 로그아웃 처리
@@ -187,7 +200,7 @@ export const Header = React.memo(() => {
             </ListItemIcon>
             프로필
           </MenuItem>
-          <MenuItem onClick={handleUserMenuClose}>
+          <MenuItem onClick={handleSettingsOpen}>
             <ListItemIcon>
               <Settings fontSize="small" />
             </ListItemIcon>
@@ -206,6 +219,13 @@ export const Header = React.memo(() => {
         <ProfileModal
           open={profileModalOpen}
           onClose={handleProfileClose}
+          user={user}
+        />
+
+        {/* 설정 모달 */}
+        <SettingsModal
+          open={settingsModalOpen}
+          onClose={handleSettingsClose}
           user={user}
         />
       </Toolbar>

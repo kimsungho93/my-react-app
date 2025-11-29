@@ -4,6 +4,7 @@ import type {
   LoginResponse,
   RefreshTokenResponse,
   UserInfo,
+  ChangePasswordRequest,
 } from "../../types/auth.types";
 
 /**
@@ -44,5 +45,12 @@ export const authApi = {
   getCurrentUser: async (): Promise<UserInfo> => {
     const response = await apiClient.get<UserInfo>("/auth/me");
     return response.data;
+  },
+
+  /**
+   * 비밀번호 변경
+   */
+  changePassword: async (data: ChangePasswordRequest): Promise<void> => {
+    await apiClient.put("/auth/password", data);
   },
 };
