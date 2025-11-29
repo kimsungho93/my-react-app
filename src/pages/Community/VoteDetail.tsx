@@ -113,18 +113,6 @@ const VoteDetail = () => {
   }, [vote, currentUser]);
 
   /**
-   * 정렬된 선택지 목록 (displayOrder 기준)
-   */
-  const sortedOptions = useMemo(() => {
-    if (!vote) return [];
-    return [...vote.options].sort((a, b) => {
-      const orderA = a.displayOrder ?? 0;
-      const orderB = b.displayOrder ?? 0;
-      return orderA - orderB;
-    });
-  }, [vote]);
-
-  /**
    * ECharts 옵션 - 파이 차트
    */
   const pieChartOption = useMemo(() => {
@@ -192,7 +180,7 @@ const VoteDetail = () => {
               shadowColor: "rgba(0, 0, 0, 0.3)",
             },
           },
-          data: sortedOptions.map((opt, index) => ({
+          data: vote.options.map((opt, index) => ({
             value: opt.voteCount,
             name: opt.text,
             itemStyle: {
@@ -202,7 +190,7 @@ const VoteDetail = () => {
         },
       ],
     };
-  }, [vote, sortedOptions]);
+  }, [vote]);
 
   /**
    * ECharts 옵션 - 바 차트
@@ -210,7 +198,7 @@ const VoteDetail = () => {
   const barChartOption = useMemo(() => {
     if (!vote) return {};
 
-    const totalVotes = sortedOptions.reduce((sum, opt) => sum + opt.voteCount, 0);
+    const totalVotes = vote.options.reduce((sum, opt) => sum + opt.voteCount, 0);
 
     return {
       tooltip: {
@@ -238,7 +226,7 @@ const VoteDetail = () => {
       },
       yAxis: {
         type: "category",
-        data: sortedOptions.map((opt) => opt.text).reverse(),
+        data: vote.options.map((opt) => opt.text).reverse(),
         axisLabel: {
           fontSize: 12,
           width: 100,
@@ -249,7 +237,7 @@ const VoteDetail = () => {
         {
           name: "투표 수",
           type: "bar",
-          data: sortedOptions.map((opt, index) => ({
+          data: vote.options.map((opt, index) => ({
             value: opt.voteCount,
             itemStyle: {
               color: getChartColor(index),
@@ -269,7 +257,7 @@ const VoteDetail = () => {
         },
       ],
     };
-  }, [vote, sortedOptions]);
+  }, [vote]);
 
   /**
    * 차트 색상 배열
@@ -656,7 +644,7 @@ const VoteDetail = () => {
           {/* 투표 폼 또는 결과 */}
           {(vote.isMultipleChoice === true || vote.multipleChoice === true) ? (
             <FormGroup>
-              {sortedOptions.map((option, index) => (
+              {vote.options.map((option, index) => (
                 <motion.div
                   key={option.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -774,7 +762,7 @@ const VoteDetail = () => {
               value={selectedOptions[0] ?? ""}
               onChange={(e) => handleSingleOptionChange(Number(e.target.value))}
             >
-              {sortedOptions.map((option, index) => (
+              {vote.options.map((option, index) => (
                 <motion.div
                   key={option.id}
                   initial={{ opacity: 0, x: -20 }}
