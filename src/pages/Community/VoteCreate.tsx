@@ -9,22 +9,21 @@ import {
   Stack,
   Switch,
   FormControlLabel,
-  IconButton,
   Divider,
   CircularProgress,
   Alert,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import { format, addDays, addHours, setMinutes } from "date-fns";
 import { voteApi } from "../../services/api/vote.api";
-import type { CreateVoteRequest, UpdateVoteRequest } from "../../types/vote.types";
+import type { CreateVoteRequest, UpdateVoteRequest, UpdateVoteOption } from "../../types/vote.types";
 import AlertModal from "../../components/common/AlertModal";
+import { useAlert } from "../../contexts/ErrorAlertContext";
+import DraggableOption from "./DraggableOption";
 
 /**
  * 투표 작성/수정 페이지
@@ -33,13 +32,26 @@ const VoteCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
+  const { showSuccess } = useAlert();
+
+  // 선택지 타입 (수정 모드와 생성 모드 호환)
+  interface OptionItem {
+    id?: number; // 수정 모드에서 기존 선택지 ID
+    text: string;
+    tempId: string; // 임시 ID (드래그용)
+  }
 
   // 폼 상태
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
+  const [options, setOptions] = useState<OptionItem[]>([
+    { text: "", tempId: "temp-1" },
+    { text: "", tempId: "temp-2" },
+  ]);
+  const [deletedOptionIds, setDeletedOptionIds] = useState<number[]>([]); // 삭제된 선택지 ID
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isMultipleChoice, setIsMultipleChoice] = useState(false);
+  const [allowAddOption, setAllowAddOption] = useState(false); // 선택지 추가 허용
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -90,6 +102,15 @@ const VoteCreate = () => {
         setIsAnonymous(vote.isAnonymous);
         setIsMultipleChoice(vote.isMultipleChoice);
 
+        // 기존 선택지 로드
+        setOptions(
+          vote.options.map((opt) => ({
+            id: opt.id,
+            text: opt.text,
+            tempId: `option-${opt.id}`,
+          }))
+        );
+
         const endDateTime = new Date(vote.endDate);
         setEndDate(format(endDateTime, "yyyy-MM-dd"));
         setEndTime(format(endDateTime, "HH:mm"));
@@ -111,7 +132,8 @@ const VoteCreate = () => {
    */
   const handleAddOption = () => {
     if (options.length < 10) {
-      setOptions([...options, ""]);
+      const newTempId = `temp-${Date.now()}`;
+      setOptions([...options, { text: "", tempId: newTempId }]);
     }
   };
 
@@ -120,6 +142,13 @@ const VoteCreate = () => {
    */
   const handleRemoveOption = (index: number) => {
     if (options.length > 2) {
+      const removedOption = options[index];
+
+      // 기존 선택지인 경우 deletedOptionIds에 추가
+      if (removedOption.id) {
+        setDeletedOptionIds([...deletedOptionIds, removedOption.id]);
+      }
+
       const newOptions = options.filter((_, i) => i !== index);
       setOptions(newOptions);
     }
@@ -130,7 +159,17 @@ const VoteCreate = () => {
    */
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
-    newOptions[index] = value;
+    newOptions[index] = { ...newOptions[index], text: value };
+    setOptions(newOptions);
+  };
+
+  /**
+   * 옵션 순서 변경 (드래그)
+   */
+  const handleMoveOption = (fromIndex: number, toIndex: number) => {
+    const newOptions = [...options];
+    const [movedOption] = newOptions.splice(fromIndex, 1);
+    newOptions.splice(toIndex, 0, movedOption);
     setOptions(newOptions);
   };
 
@@ -159,20 +198,19 @@ const VoteCreate = () => {
       return false;
     }
 
-    if (!isEditMode) {
-      const validOptions = options.filter((opt) => opt.trim());
-      if (validOptions.length < 2) {
-        showErrorModal("최소 2개의 선택지를 입력해주세요.");
-        return false;
-      }
+    // 선택지 유효성 검사 (생성 및 수정 모드 모두)
+    const validOptions = options.filter((opt) => opt.text.trim());
+    if (validOptions.length < 2) {
+      showErrorModal("최소 2개의 선택지를 입력해주세요.");
+      return false;
+    }
 
-      // 중복 선택지 검사
-      const trimmedOptions = validOptions.map((opt) => opt.trim().toLowerCase());
-      const uniqueOptions = new Set(trimmedOptions);
-      if (uniqueOptions.size !== trimmedOptions.length) {
-        showErrorModal("중복된 선택지가 있습니다. 서로 다른 선택지를 입력해주세요.");
-        return false;
-      }
+    // 중복 선택지 검사
+    const trimmedOptions = validOptions.map((opt) => opt.text.trim().toLowerCase());
+    const uniqueOptions = new Set(trimmedOptions);
+    if (uniqueOptions.size !== trimmedOptions.length) {
+      showErrorModal("중복된 선택지가 있습니다. 서로 다른 선택지를 입력해주세요.");
+      return false;
     }
 
     if (!endDate || !endTime) {
@@ -190,6 +228,14 @@ const VoteCreate = () => {
   };
 
   /**
+   * 로컬 날짜/시간을 ISO 문자열로 변환 (타임존 변환 없이)
+   */
+  const formatLocalDateTimeToISO = (date: string, time: string): string => {
+    // YYYY-MM-DDTHH:mm 형식으로 반환 (분 단위까지만, 타임존 정보 제외)
+    return `${date}T${time}`;
+  };
+
+  /**
    * 투표 생성/수정 제출
    */
   const handleSubmit = async () => {
@@ -199,33 +245,59 @@ const VoteCreate = () => {
 
     setLoading(true);
     try {
-      const endDateTime = new Date(`${endDate}T${endTime}`);
+      // 로컬 시간 그대로 ISO 형식으로 변환 (UTC 변환 방지)
+      const endDateTimeISO = formatLocalDateTimeToISO(endDate, endTime);
 
       if (isEditMode && id) {
+        // 수정 모드: 선택지 정보 포함
+        const validOptions = options.filter((opt) => opt.text.trim());
+        const updateOptions: UpdateVoteOption[] = validOptions.map((opt, index) => ({
+          id: opt.id, // 기존 선택지면 id 있음, 새 선택지면 undefined
+          text: opt.text.trim(),
+          displayOrder: index, // 백엔드 필드명에 맞춤
+        }));
+
         const updateRequest: UpdateVoteRequest = {
           title: title.trim(),
           description: description.trim() || undefined,
-          endDate: endDateTime.toISOString(),
+          endDate: endDateTimeISO,
+          options: updateOptions,
+          deletedOptionIds: deletedOptionIds.length > 0 ? deletedOptionIds : undefined,
         };
         await voteApi.updateVote(Number(id), updateRequest);
-        navigate(`/community/vote/${id}`);
+
+        // 성공 메시지 표시
+        showSuccess("투표가 성공적으로 수정되었습니다.");
+
+        // 잠시 후 상세 페이지로 이동
+        setTimeout(() => {
+          navigate(`/community/vote/${id}`);
+        }, 1000);
       } else {
-        const validOptions = options.filter((opt) => opt.trim());
+        // 생성 모드
+        const validOptions = options.filter((opt) => opt.text.trim());
         const createRequest: CreateVoteRequest = {
           title: title.trim(),
           description: description.trim() || undefined,
-          options: validOptions,
+          options: validOptions.map((opt) => opt.text.trim()),
           isAnonymous,
           isMultipleChoice,
-          endDate: endDateTime.toISOString(),
+          allowAddOption,
+          endDate: endDateTimeISO,
         };
         const response = await voteApi.createVote(createRequest);
-        // 생성된 투표 ID가 있으면 상세 페이지로, 없으면 목록으로 이동
-        if (response.data?.id) {
-          navigate(`/community/vote/${response.data.id}`);
-        } else {
-          navigate("/community/vote/list");
-        }
+
+        // 성공 메시지 표시
+        showSuccess("투표가 성공적으로 생성되었습니다.");
+
+        // 잠시 후 상세 페이지로 이동
+        setTimeout(() => {
+          if (response.data?.id) {
+            navigate(`/community/vote/${response.data.id}`);
+          } else {
+            navigate("/community/vote/list");
+          }
+        }, 1000);
       }
     } catch (err) {
       console.error("Failed to save vote:", err);
@@ -321,73 +393,38 @@ const VoteCreate = () => {
 
           <Divider />
 
-          {/* 선택지 (생성 시에만) */}
-          {!isEditMode && (
-            <Box>
-              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-                선택지 (최소 2개, 최대 10개)
-              </Typography>
+          {/* 선택지 */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+              선택지 (최소 2개, 최대 10개)
+            </Typography>
 
-              <AnimatePresence>
-                {options.map((option, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <DragIndicatorIcon
-                        sx={{ color: "text.disabled", cursor: "grab" }}
-                      />
-                      <TextField
-                        value={option}
-                        onChange={(e) => handleOptionChange(index, e.target.value)}
-                        placeholder={`선택지 ${index + 1}`}
-                        fullWidth
-                        size="small"
-                        disabled={loading}
-                        inputProps={{ maxLength: 100 }}
-                      />
-                      <IconButton
-                        onClick={() => handleRemoveOption(index)}
-                        disabled={options.length <= 2 || loading}
-                        color="error"
-                        size="small"
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
-                    </Box>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {options.length < 10 && (
-                <Button
-                  startIcon={<AddCircleOutlineIcon />}
-                  onClick={handleAddOption}
+            <AnimatePresence>
+              {options.map((option, index) => (
+                <DraggableOption
+                  key={option.tempId}
+                  option={option}
+                  index={index}
+                  onMove={handleMoveOption}
+                  onChange={handleOptionChange}
+                  onRemove={handleRemoveOption}
                   disabled={loading}
-                  sx={{ mt: 1 }}
-                >
-                  선택지 추가
-                </Button>
-              )}
-            </Box>
-          )}
+                  canRemove={options.length > 2}
+                />
+              ))}
+            </AnimatePresence>
 
-          {isEditMode && (
-            <Alert severity="info">
-              수정 모드에서는 선택지를 변경할 수 없습니다. 제목, 설명, 마감 일시만 수정 가능합니다.
-            </Alert>
-          )}
+            {options.length < 10 && (
+              <Button
+                startIcon={<AddCircleOutlineIcon />}
+                onClick={handleAddOption}
+                disabled={loading}
+                sx={{ mt: 1 }}
+              >
+                선택지 추가
+              </Button>
+            )}
+          </Box>
 
           <Divider />
 
@@ -430,6 +467,24 @@ const VoteCreate = () => {
                       <Typography variant="body1">복수 선택 허용</Typography>
                       <Typography variant="caption" color="text.secondary">
                         여러 개의 선택지를 동시에 선택할 수 있습니다
+                      </Typography>
+                    </Box>
+                  }
+                />
+
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={allowAddOption}
+                      onChange={(e) => setAllowAddOption(e.target.checked)}
+                      disabled={loading}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body1">선택지 추가 허용</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        투표 참여자가 새로운 선택지를 추가할 수 있습니다
                       </Typography>
                     </Box>
                   }

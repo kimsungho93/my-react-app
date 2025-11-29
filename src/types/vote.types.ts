@@ -37,6 +37,8 @@ export interface VoteOption {
   text: string;
   voteCount: number;
   voters: VoteParticipant[];
+  displayOrder?: number; // 선택지 순서
+  addedByUserId?: number; // 사용자가 추가한 선택지인 경우
 }
 
 /**
@@ -59,6 +61,7 @@ export interface Vote {
   options: VoteOption[];
   isAnonymous: boolean;
   isMultipleChoice: boolean;
+  allowAddOption: boolean; // 선택지 추가 허용 여부
   /** Jackson이 is 접두사를 제거할 수 있어서 둘 다 지원 */
   anonymous?: boolean;
   multipleChoice?: boolean;
@@ -105,7 +108,35 @@ export interface CreateVoteRequest {
   options: string[];
   isAnonymous: boolean;
   isMultipleChoice: boolean;
+  allowAddOption: boolean; // 선택지 추가 허용 여부
   endDate: string;
+}
+
+/**
+ * 선택지 추가 요청
+ */
+export interface AddVoteOptionRequest {
+  text: string;
+}
+
+/**
+ * 선택지 추가 응답
+ */
+export interface AddVoteOptionResponse {
+  id: number;
+  text: string;
+  voteCount: number;
+  displayOrder: number;
+  addedByUserId: number;
+}
+
+/**
+ * 투표 선택지 수정 정보
+ */
+export interface UpdateVoteOption {
+  id?: number; // 기존 선택지인 경우 id 포함
+  text: string;
+  displayOrder: number; // 선택지 순서 (백엔드 필드명: displayOrder)
 }
 
 /**
@@ -115,6 +146,8 @@ export interface UpdateVoteRequest {
   title: string;
   description?: string;
   endDate: string;
+  options?: UpdateVoteOption[]; // 선택지 수정 정보 (선택적)
+  deletedOptionIds?: number[]; // 삭제할 선택지 ID 목록 (선택적)
 }
 
 /**

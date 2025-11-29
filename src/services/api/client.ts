@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { tokenManager } from "../../utils/tokenManager";
 import type { RefreshTokenResponse } from "../../types/auth.types";
+import { errorHandler } from "../../utils/errorHandler";
 
 /**
  * API 기본 URL
@@ -89,10 +90,11 @@ apiClient.interceptors.request.use(
 /**
  * 응답 인터셉터
  * 401 에러 시 토큰 갱신 시도
+ * 4xx, 5xx 에러 시 메시지 표시
  */
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
+  async (error: AxiosError<{ message?: string; errors?: unknown }>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
@@ -154,6 +156,16 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
+      }
+    }
+
+    // 4xx, 5xx 에러 시 서버에서 전달한 메시지를 전역 에러 알림으로 표시
+    if (error.response && error.response.status >= 400) {
+      const errorMessage = error.response.data?.message;
+
+      // 로그인/회원가입 엔드포인트는 컴포넌트에서 직접 처리하도록 제외
+      if (!isAuthEndpoint && errorMessage) {
+        errorHandler.notify(errorMessage);
       }
     }
 

@@ -5,6 +5,8 @@ import type {
   CreateVoteRequest,
   UpdateVoteRequest,
   CastVoteRequest,
+  AddVoteOptionRequest,
+  AddVoteOptionResponse,
 } from "../../types/vote.types";
 
 /**
@@ -97,6 +99,22 @@ export const voteApi = {
    */
   closeVote: async (id: number): Promise<{ data: Vote }> => {
     const response = await apiClient.post<ApiResponse<Vote>>(`/votes/${id}/close`);
+    return { data: response.data.data };
+  },
+
+  /**
+   * 투표 선택지 추가
+   * @param voteId 투표 ID
+   * @param request 선택지 추가 요청 데이터
+   */
+  addVoteOption: async (
+    voteId: number,
+    request: AddVoteOptionRequest
+  ): Promise<{ data: AddVoteOptionResponse }> => {
+    const response = await apiClient.post<ApiResponse<AddVoteOptionResponse>>(
+      `/votes/${voteId}/options`,
+      request
+    );
     return { data: response.data.data };
   },
 };

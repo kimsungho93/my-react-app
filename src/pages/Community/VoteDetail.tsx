@@ -27,6 +27,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  TextField,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -43,6 +44,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { ko } from "date-fns/locale";
 import { voteApi } from "../../services/api/vote.api";
@@ -66,6 +68,9 @@ const VoteDetail = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [newOptionText, setNewOptionText] = useState("");
+  const [isAddingOption, setIsAddingOption] = useState(false);
+  const [showAddOptionForm, setShowAddOptionForm] = useState(false);
 
   /**
    * 투표 데이터 조회
@@ -106,6 +111,18 @@ const VoteDetail = () => {
     if (!vote || !currentUser) return false;
     return Number(currentUser.id) === vote.author.id || currentUser.role === "ADMIN";
   }, [vote, currentUser]);
+
+  /**
+   * 정렬된 선택지 목록 (displayOrder 기준)
+   */
+  const sortedOptions = useMemo(() => {
+    if (!vote) return [];
+    return [...vote.options].sort((a, b) => {
+      const orderA = a.displayOrder ?? 0;
+      const orderB = b.displayOrder ?? 0;
+      return orderA - orderB;
+    });
+  }, [vote]);
 
   /**
    * ECharts 옵션 - 파이 차트
@@ -175,7 +192,7 @@ const VoteDetail = () => {
               shadowColor: "rgba(0, 0, 0, 0.3)",
             },
           },
-          data: vote.options.map((opt, index) => ({
+          data: sortedOptions.map((opt, index) => ({
             value: opt.voteCount,
             name: opt.text,
             itemStyle: {
@@ -185,7 +202,7 @@ const VoteDetail = () => {
         },
       ],
     };
-  }, [vote]);
+  }, [vote, sortedOptions]);
 
   /**
    * ECharts 옵션 - 바 차트
@@ -193,7 +210,7 @@ const VoteDetail = () => {
   const barChartOption = useMemo(() => {
     if (!vote) return {};
 
-    const totalVotes = vote.options.reduce((sum, opt) => sum + opt.voteCount, 0);
+    const totalVotes = sortedOptions.reduce((sum, opt) => sum + opt.voteCount, 0);
 
     return {
       tooltip: {
@@ -221,7 +238,7 @@ const VoteDetail = () => {
       },
       yAxis: {
         type: "category",
-        data: vote.options.map((opt) => opt.text).reverse(),
+        data: sortedOptions.map((opt) => opt.text).reverse(),
         axisLabel: {
           fontSize: 12,
           width: 100,
@@ -232,7 +249,7 @@ const VoteDetail = () => {
         {
           name: "투표 수",
           type: "bar",
-          data: vote.options.map((opt, index) => ({
+          data: sortedOptions.map((opt, index) => ({
             value: opt.voteCount,
             itemStyle: {
               color: getChartColor(index),
@@ -252,7 +269,7 @@ const VoteDetail = () => {
         },
       ],
     };
-  }, [vote]);
+  }, [vote, sortedOptions]);
 
   /**
    * 차트 색상 배열
@@ -360,6 +377,45 @@ const VoteDetail = () => {
   };
 
   /**
+   * 선택지 추가 핸들러
+   */
+  const handleAddOption = async () => {
+    if (!vote || !newOptionText.trim()) return;
+
+    // 중복 체크
+    const isDuplicate = vote.options.some(
+      (opt) => opt.text.trim().toLowerCase() === newOptionText.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      alert("이미 존재하는 선택지입니다.");
+      return;
+    }
+
+    // 최대 개수 체크
+    if (vote.options.length >= 20) {
+      alert("선택지는 최대 20개까지 추가할 수 있습니다.");
+      return;
+    }
+
+    setIsAddingOption(true);
+    try {
+      await voteApi.addVoteOption(vote.id, { text: newOptionText.trim() });
+
+      // 투표 데이터 다시 불러오기
+      const response = await voteApi.getVoteDetail(vote.id);
+      setVote(response.data);
+      setNewOptionText("");
+      setShowAddOptionForm(false);
+      alert("선택지가 추가되었습니다.");
+    } catch (err) {
+      console.error("Failed to add option:", err);
+      alert("선택지 추가에 실패했습니다.");
+    } finally {
+      setIsAddingOption(false);
+    }
+  };
+
+  /**
    * 투표율 계산
    */
   const getVotePercentage = (option: VoteOption): number => {
@@ -421,18 +477,20 @@ const VoteDetail = () => {
 
               {canEditOrDelete && (
                 <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <Button
-                    startIcon={<EditIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                    onClick={() => navigate(`/community/vote/edit/${vote.id}`)}
-                    size="small"
-                    sx={{
-                      px: { xs: 1, sm: 1.5 },
-                      fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                      minWidth: "auto",
-                    }}
-                  >
-                    수정
-                  </Button>
+                  {!isVoteClosed && (
+                    <Button
+                      startIcon={<EditIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                      onClick={() => navigate(`/community/vote/edit/${vote.id}`)}
+                      size="small"
+                      sx={{
+                        px: { xs: 1, sm: 1.5 },
+                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                        minWidth: "auto",
+                      }}
+                    >
+                      수정
+                    </Button>
+                  )}
                   <Button
                     startIcon={<DeleteIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                     color="error"
@@ -598,7 +656,7 @@ const VoteDetail = () => {
           {/* 투표 폼 또는 결과 */}
           {(vote.isMultipleChoice === true || vote.multipleChoice === true) ? (
             <FormGroup>
-              {vote.options.map((option, index) => (
+              {sortedOptions.map((option, index) => (
                 <motion.div
                   key={option.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -716,7 +774,7 @@ const VoteDetail = () => {
               value={selectedOptions[0] ?? ""}
               onChange={(e) => handleSingleOptionChange(Number(e.target.value))}
             >
-              {vote.options.map((option, index) => (
+              {sortedOptions.map((option, index) => (
                 <motion.div
                   key={option.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -822,6 +880,79 @@ const VoteDetail = () => {
                 </motion.div>
               ))}
             </RadioGroup>
+          )}
+
+          {/* 선택지 추가 섹션 (allowAddOption이 true인 경우) */}
+          {!isVoteClosed && vote.allowAddOption && (
+            <Box sx={{ mt: 3, mb: 2 }}>
+              {!showAddOptionForm ? (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddCircleOutlineIcon />}
+                  onClick={() => setShowAddOptionForm(true)}
+                  fullWidth
+                  sx={{ borderStyle: "dashed" }}
+                >
+                  새로운 선택지 추가하기
+                </Button>
+              ) : (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    border: 2,
+                    borderColor: "primary.main",
+                    borderStyle: "dashed",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <TextField
+                      label="새로운 선택지"
+                      value={newOptionText}
+                      onChange={(e) => setNewOptionText(e.target.value)}
+                      placeholder="선택지 내용을 입력하세요"
+                      fullWidth
+                      autoFocus
+                      disabled={isAddingOption}
+                      inputProps={{ maxLength: 100 }}
+                      helperText={`${newOptionText.length} / 100`}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && newOptionText.trim()) {
+                          handleAddOption();
+                        }
+                      }}
+                    />
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setShowAddOptionForm(false);
+                          setNewOptionText("");
+                        }}
+                        disabled={isAddingOption}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleAddOption}
+                        disabled={!newOptionText.trim() || isAddingOption}
+                        startIcon={
+                          isAddingOption ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            <AddCircleOutlineIcon />
+                          )
+                        }
+                      >
+                        {isAddingOption ? "추가 중..." : "추가"}
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Paper>
+              )}
+            </Box>
           )}
 
           {/* 투표 버튼 */}

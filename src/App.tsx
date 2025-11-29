@@ -8,6 +8,7 @@ import { getTheme } from "./styles/theme";
 import { useAppSelector, useAppDispatch } from "./hooks/useRedux";
 import { fetchCurrentUser } from "./store/slices/authSlice";
 import { tokenManager } from "./utils/tokenManager";
+import { ErrorAlertProvider } from "./contexts/ErrorAlertContext";
 
 /**
  * 테마 프로바이더 래퍼 컴포넌트
@@ -41,7 +42,9 @@ const ThemedApp = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <ErrorAlertProvider>
+        <RouterProvider router={router} />
+      </ErrorAlertProvider>
     </ThemeProvider>
   );
 };
