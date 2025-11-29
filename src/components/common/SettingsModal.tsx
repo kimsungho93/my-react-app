@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,14 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
-import { Close as CloseIcon, PhotoCamera } from "@mui/icons-material";
+import { Close as CloseIcon, PhotoCamera, AccountCircle } from "@mui/icons-material";
 import type { UserInfo } from "../../types/auth.types";
 import { authApi } from "../../services/api/auth.api";
+import { userApi } from "../../services/api/user.api";
+import { useAppDispatch } from "../../hooks/useRedux";
+import { updateUser } from "../../store/slices/authSlice";
+import { useProfileImageUrl } from "../../hooks/useProfileImageUrl";
+import { profileImageCache } from "../../utils/profileImageCache";
 
 /**
  * 설정 모달 Props
@@ -46,10 +51,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   user,
 }) => {
-  // 프로필 사진 상태 (Mock)
-  const [profileImage, setProfileImage] = useState(
-    "https://i.pravatar.cc/150?img=68"
+  const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 프로필 이미지 Presigned URL 조회
+  const { presignedUrl: profileImagePresignedUrl } = useProfileImageUrl(
+    user?.id?.toString(),
+    user?.profileImageUrl
   );
+
+  // 선택된 이미지 파일
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // 이미지 미리보기 URL
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  // 프로필 사진 변경용 비밀번호
+  const [profilePassword, setProfilePassword] = useState("");
+  // 프로필 사진 업로드 중 상태
+  const [isUploading, setIsUploading] = useState(false);
 
   // 비밀번호 변경 폼 상태
   const [passwordForm, setPasswordForm] = useState<PasswordFormState>({
@@ -67,21 +85,118 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     return null;
   }
 
+  // 현재 프로필 이미지 (미리보기가 있으면 미리보기, 없으면 Presigned URL)
+  const currentProfileImage = previewUrl || profileImagePresignedUrl;
+  const hasProfileImage = !!currentProfileImage;
+
   /**
-   * 프로필 사진 변경 핸들러 (Mock)
+   * 프로필 사진 파일 선택 핸들러
    */
-  const handleProfileImageChange = (
+  const handleProfileImageSelect = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-        setSuccess("프로필 사진이 변경되었습니다.");
-        setTimeout(() => setSuccess(""), 3000);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setError("");
+    setSuccess("");
+
+    // 파일 크기 검증 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("파일 크기가 5MB를 초과합니다.");
+      return;
+    }
+
+    // 파일 포맷 검증
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("JPG, PNG, WebP 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    // 파일 저장 및 미리보기 생성
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /**
+   * 프로필 사진 업로드 핸들러
+   */
+  const handleProfileImageUpload = async () => {
+    if (!selectedFile) {
+      setError("업로드할 이미지를 선택해주세요.");
+      return;
+    }
+
+    if (!profilePassword) {
+      setError("현재 비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setIsUploading(true);
+
+    try {
+      const response = await userApi.updateProfileImage(
+        selectedFile,
+        profilePassword
+      );
+
+      // Redux 상태 업데이트
+      dispatch(updateUser({ profileImageUrl: response.profileImageUrl }));
+
+      setSuccess("프로필 사진이 성공적으로 변경되었습니다.");
+      setSelectedFile(null);
+      setPreviewUrl("");
+      setProfilePassword("");
+
+      // 프로필 이미지 Presigned URL 즉시 갱신 및 전역 이벤트 발행
+      // Redux 업데이트 후 약간의 지연을 두고 갱신 (R2 업로드 완료 보장)
+      setTimeout(() => {
+        // 캐시 삭제 및 전역 이벤트 발행
+        // 모든 컴포넌트(게시글, 투표 목록, 설정 모달 등)에서 프로필 사진 즉시 갱신
+        if (user?.id) {
+          profileImageCache.deleteAndNotify(user.id.toString());
+        }
+      }, 500);
+
+      // 파일 입력 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      if (err.response?.data?.error?.code === "INVALID_PASSWORD") {
+        setError("현재 비밀번호가 일치하지 않습니다.");
+      } else if (err.response?.data?.error?.code === "FILE_TOO_LARGE") {
+        setError("파일 크기가 5MB를 초과합니다.");
+      } else if (err.response?.data?.error?.code === "INVALID_FILE_FORMAT") {
+        setError("지원하지 않는 파일 형식입니다.");
+      } else {
+        setError("프로필 사진 업로드에 실패했습니다. 다시 시도해주세요.");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  /**
+   * 프로필 사진 변경 취소
+   */
+  const handleCancelImageChange = () => {
+    setSelectedFile(null);
+    setPreviewUrl("");
+    setProfilePassword("");
+    setError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -155,8 +270,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       newPassword: "",
       confirmPassword: "",
     });
+    setSelectedFile(null);
+    setPreviewUrl("");
+    setProfilePassword("");
     setError("");
     setSuccess("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
     onClose();
   };
 
@@ -225,40 +348,107 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               gap: 2,
             }}
           >
-            <Avatar
-              src={profileImage}
-              alt={user.name}
-              sx={{
-                width: 80,
-                height: 80,
-                border: 2,
-                borderColor: "primary.main",
-              }}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<PhotoCamera />}
-              sx={{
-                borderRadius: 2,
-              }}
-            >
-              사진 변경
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleProfileImageChange}
+            {hasProfileImage ? (
+              <Avatar
+                src={currentProfileImage}
+                alt={user.name}
+                sx={{
+                  width: 80,
+                  height: 80,
+                  border: 2,
+                  borderColor: selectedFile ? "warning.main" : "primary.main",
+                }}
               />
-            </Button>
+            ) : (
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  border: 2,
+                  borderColor: selectedFile ? "warning.main" : "primary.main",
+                  bgcolor: "background.paper",
+                }}
+              >
+                <AccountCircle sx={{ width: 64, height: 64, color: "text.secondary" }} />
+              </Avatar>
+            )}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<PhotoCamera />}
+                disabled={isUploading}
+                sx={{
+                  borderRadius: 2,
+                }}
+              >
+                사진 선택
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleProfileImageSelect}
+                />
+              </Button>
+              {selectedFile && (
+                <Typography variant="caption" color="text.secondary">
+                  선택됨: {selectedFile.name}
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ display: "block", mt: 1 }}
           >
-            JPG, PNG 파일을 업로드해주세요. (최대 5MB)
+            JPG, PNG, WebP 파일을 업로드해주세요. (권장: 150x150px, 최대 5MB)
           </Typography>
+
+          {/* 이미지 선택 시 비밀번호 입력 및 업로드 버튼 표시 */}
+          {selectedFile && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                backgroundColor: "action.hover",
+                borderRadius: 2,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <TextField
+                type="password"
+                label="현재 비밀번호"
+                placeholder="보안 확인을 위해 입력해주세요"
+                value={profilePassword}
+                onChange={(e) => setProfilePassword(e.target.value)}
+                fullWidth
+                size="small"
+                disabled={isUploading}
+              />
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleProfileImageUpload}
+                  disabled={isUploading || !profilePassword}
+                  sx={{ flex: 1, borderRadius: 2 }}
+                >
+                  {isUploading ? "업로드 중..." : "프로필 사진 변경"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCancelImageChange}
+                  disabled={isUploading}
+                  sx={{ borderRadius: 2 }}
+                >
+                  취소
+                </Button>
+              </Box>
+            </Box>
+          )}
         </Box>
 
         <Divider sx={{ my: 3 }} />

@@ -26,7 +26,8 @@ export const VOTE_STATUS_LABELS: Record<VoteStatus, string> = {
 export interface VoteAuthor {
   id: number;
   name: string;
-  profileImage?: string;
+  profileImage?: string; // 백엔드 응답 필드명 (레거시)
+  profileImageUrl?: string; // R2 버킷의 프로필 이미지 URL (Presigned URL로 변환 필요)
 }
 
 /**
@@ -48,6 +49,8 @@ export interface VoteParticipant {
   id: number;
   name: string;
   votedAt: string;
+  profileImage?: string; // 백엔드 응답 필드명 (레거시)
+  profileImageUrl?: string; // R2 버킷의 프로필 이미지 URL (Presigned URL로 변환 필요)
 }
 
 /**

@@ -7,7 +7,6 @@ import {
   Button,
   Stack,
   Chip,
-  Avatar,
   Divider,
   IconButton,
   TextField,
@@ -27,6 +26,7 @@ import { boardApi } from "../../services/api/board.api";
 import type { Post, Comment } from "../../services/api/board.api";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
+import { UserAvatar } from "../../components/common/UserAvatar";
 
 /**
  * 게시글 상세 조회 페이지
@@ -347,9 +347,12 @@ const BoardDetail = () => {
             >
               {/* 작성자 정보 */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Avatar sx={{ width: 40, height: 40 }} src={post.author?.avatarUrl}>
-                  {post.author?.nickname?.[0] ?? "?"}
-                </Avatar>
+                <UserAvatar
+                  userId={post.author?.id}
+                  profileImageUrl={post.author?.profileImageUrl || post.author?.avatarUrl}
+                  name={post.author?.nickname}
+                  size={40}
+                />
                 <Box>
                   <Typography variant="body1" fontWeight={600}>
                     {post.author?.nickname ?? "익명"}
@@ -498,9 +501,12 @@ const BoardDetail = () => {
                           }}
                         >
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Avatar sx={{ width: 32, height: 32 }} src={comment.author?.avatarUrl}>
-                              {comment.author?.nickname?.[0] ?? "?"}
-                            </Avatar>
+                            <UserAvatar
+                              userId={comment.author?.id}
+                              profileImageUrl={comment.author?.profileImageUrl || comment.author?.avatarUrl}
+                              name={comment.author?.nickname}
+                              size={32}
+                            />
                             <Box>
                               <Typography variant="body2" fontWeight={600}>
                                 {comment.author?.nickname ?? "익명"}
@@ -597,9 +603,12 @@ const BoardDetail = () => {
                               }}
                             >
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Avatar sx={{ width: 28, height: 28 }} src={reply.author?.avatarUrl}>
-                                  {reply.author?.nickname?.[0] ?? "?"}
-                                </Avatar>
+                                <UserAvatar
+                                  userId={reply.author?.id}
+                                  profileImageUrl={reply.author?.profileImageUrl || reply.author?.avatarUrl}
+                                  name={reply.author?.nickname}
+                                  size={28}
+                                />
                                 <Box>
                                   <Typography variant="body2" fontWeight={600}>
                                     {reply.author?.nickname ?? "익명"}

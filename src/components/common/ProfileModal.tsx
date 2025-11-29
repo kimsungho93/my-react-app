@@ -8,8 +8,9 @@ import {
   IconButton,
   Divider,
 } from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
+import { Close as CloseIcon, AccountCircle } from "@mui/icons-material";
 import type { UserInfo } from "../../types/auth.types";
+import { useProfileImageUrl } from "../../hooks/useProfileImageUrl";
 
 /**
  * 프로필 모달 Props
@@ -46,6 +47,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onClose,
   user,
 }) => {
+  // 프로필 이미지 Presigned URL 조회
+  const { presignedUrl: profileImagePresignedUrl } = useProfileImageUrl(
+    user?.id?.toString(),
+    user?.profileImageUrl
+  );
+
   if (!user) {
     return null;
   }
@@ -101,17 +108,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           py: 3,
         }}
       >
-        {/* 프로필 사진 (Mock) */}
-        <Avatar
-          src="https://i.pravatar.cc/150?img=68"
-          alt={user.name}
-          sx={{
-            width: 100,
-            height: 100,
-            border: 3,
-            borderColor: "primary.main",
-          }}
-        />
+        {/* 프로필 사진 */}
+        {profileImagePresignedUrl ? (
+          <Avatar
+            src={profileImagePresignedUrl}
+            alt={user.name}
+            sx={{
+              width: 100,
+              height: 100,
+              border: 3,
+              borderColor: "primary.main",
+            }}
+          />
+        ) : (
+          <Avatar
+            sx={{
+              width: 100,
+              height: 100,
+              border: 3,
+              borderColor: "primary.main",
+              bgcolor: "background.paper",
+            }}
+          >
+            <AccountCircle sx={{ width: 80, height: 80, color: "text.secondary" }} />
+          </Avatar>
+        )}
 
         {/* 사용자 이름 */}
         <Box sx={{ textAlign: "center", width: "100%" }}>

@@ -18,6 +18,7 @@ import {
   Person,
   LightMode,
   DarkMode,
+  AccountCircle,
 } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";
 import { toggleCollapse } from "../../store/slices/layoutSlice";
@@ -25,6 +26,7 @@ import { toggleTheme } from "../../store/slices/themeSlice";
 import { logout } from "../../store/slices/authSlice";
 import { ProfileModal } from "../common/ProfileModal";
 import { SettingsModal } from "../common/SettingsModal";
+import { useProfileImageUrl } from "../../hooks/useProfileImageUrl";
 
 /**
  * 레이아웃 헤더 컴포넌트
@@ -40,6 +42,12 @@ export const Header = React.memo(() => {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const isDark = mode === "dark";
+
+  // 프로필 이미지 Presigned URL 조회
+  const { presignedUrl: profileImagePresignedUrl } = useProfileImageUrl(
+    user?.id?.toString(),
+    user?.profileImageUrl
+  );
 
   // 사이드바 접기/펼치기
   const handleCollapseToggle = useCallback(
@@ -168,9 +176,15 @@ export const Header = React.memo(() => {
             }}
             aria-label="계정 설정"
           >
-            <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.main", fontSize: "0.875rem" }}>
-              U
-            </Avatar>
+            {profileImagePresignedUrl ? (
+              <Avatar
+                src={profileImagePresignedUrl}
+                alt={user?.name}
+                sx={{ width: 28, height: 28 }}
+              />
+            ) : (
+              <AccountCircle sx={{ width: 28, height: 28, color: "text.secondary" }} />
+            )}
           </IconButton>
         </Box>
 

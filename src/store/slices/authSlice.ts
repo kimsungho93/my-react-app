@@ -118,6 +118,18 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.error = null;
     },
+
+    /**
+     * 사용자 정보 업데이트 (부분 업데이트)
+     */
+    updateUser: (state, action) => {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+      }
+    },
   },
   extraReducers: (builder) => {
     // 로그인
@@ -179,5 +191,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, resetAuth } = authSlice.actions;
+export const { clearError, resetAuth, updateUser } = authSlice.actions;
 export default authSlice.reducer;

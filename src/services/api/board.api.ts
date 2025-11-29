@@ -5,7 +5,8 @@ export type BoardCategory = "notice" | "free" | "humor" | "knowledge";
 export interface PostAuthor {
   id: number;
   nickname: string;
-  avatarUrl?: string;
+  avatarUrl?: string; // 레거시 필드 (제거 예정)
+  profileImageUrl?: string; // R2 버킷의 프로필 이미지 URL (Presigned URL로 변환 필요)
 }
 
 export interface Post {

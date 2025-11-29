@@ -10,7 +10,6 @@ import {
   CardContent,
   Stack,
   Chip,
-  Avatar,
   CircularProgress,
   Alert,
   Fab,
@@ -29,6 +28,7 @@ import { ko } from "date-fns/locale";
 import { voteApi } from "../../services/api/vote.api";
 import { userApi } from "../../services/api/user.api";
 import type { VoteListItem, VoteStatus } from "../../types/vote.types";
+import { UserAvatar } from "../../components/common/UserAvatar";
 
 /**
  * 투표 목록 페이지
@@ -313,12 +313,12 @@ const VoteList = () => {
                           >
                             {/* 작성자 정보 */}
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <Avatar
-                                sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
-                                src={vote.author.profileImage}
-                              >
-                                {vote.author.name[0]}
-                              </Avatar>
+                              <UserAvatar
+                                userId={vote.author.id}
+                                profileImageUrl={vote.author.profileImageUrl || vote.author.profileImage}
+                                name={vote.author.name}
+                                size={24}
+                              />
                               <Typography variant="body2" color="text.secondary">
                                 {vote.author.name}
                               </Typography>

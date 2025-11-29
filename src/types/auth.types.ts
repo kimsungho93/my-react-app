@@ -36,6 +36,7 @@ export interface UserInfo {
   role: string;
   position: string;
   positionDisplayName: string;
+  profileImageUrl?: string;
 }
 
 /**

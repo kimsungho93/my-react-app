@@ -11,7 +11,6 @@ import {
   CardActionArea,
   Stack,
   Chip,
-  Avatar,
   CircularProgress,
   Alert,
 } from "@mui/material";
@@ -24,6 +23,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { boardApi } from "../../services/api/board.api";
 import type { Post, BoardCategory } from "../../services/api/board.api";
+import { UserAvatar } from "../../components/common/UserAvatar";
 
 /**
  * 게시글 조회 페이지
@@ -249,12 +249,12 @@ const BoardList = () => {
                       >
                         {/* 작성자 정보 */}
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Avatar
-                            sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
-                            src={post.author?.avatarUrl}
-                          >
-                            {post.author?.nickname?.[0] ?? "?"}
-                          </Avatar>
+                          <UserAvatar
+                            userId={post.author?.id}
+                            profileImageUrl={post.author?.profileImageUrl || post.author?.avatarUrl}
+                            name={post.author?.nickname}
+                            size={24}
+                          />
                           <Typography variant="body2" color="text.secondary">
                             {post.author?.nickname ?? "익명"}
                           </Typography>

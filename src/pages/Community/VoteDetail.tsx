@@ -7,7 +7,6 @@ import {
   Button,
   Stack,
   Chip,
-  Avatar,
   Divider,
   CircularProgress,
   Alert,
@@ -50,6 +49,7 @@ import { ko } from "date-fns/locale";
 import { voteApi } from "../../services/api/vote.api";
 import type { Vote, VoteOption } from "../../types/vote.types";
 import type { RootState } from "../../store";
+import { UserAvatar } from "../../components/common/UserAvatar";
 
 /**
  * 투표 상세 페이지
@@ -558,9 +558,12 @@ const VoteDetail = () => {
             >
               {/* 작성자 정보 */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Avatar sx={{ width: 40, height: 40 }} src={vote.author.profileImage}>
-                  {vote.author.name[0]}
-                </Avatar>
+                <UserAvatar
+                  userId={vote.author.id}
+                  profileImageUrl={vote.author.profileImageUrl || vote.author.profileImage}
+                  name={vote.author.name}
+                  size={40}
+                />
                 <Box>
                   <Typography variant="body1" fontWeight={600}>
                     {vote.author.name}
@@ -736,9 +739,12 @@ const VoteDetail = () => {
                           {option.voters.map((voter) => (
                             <ListItem key={voter.id} sx={{ py: 0.5 }}>
                               <ListItemAvatar sx={{ minWidth: 36 }}>
-                                <Avatar sx={{ width: 24, height: 24, fontSize: "0.75rem" }}>
-                                  {voter.name[0]}
-                                </Avatar>
+                                <UserAvatar
+                                  userId={voter.id}
+                                  profileImageUrl={voter.profileImageUrl || voter.profileImage}
+                                  name={voter.name}
+                                  size={24}
+                                />
                               </ListItemAvatar>
                               <ListItemText
                                 primary={voter.name}
@@ -847,9 +853,12 @@ const VoteDetail = () => {
                           {option.voters.map((voter) => (
                             <ListItem key={voter.id} sx={{ py: 0.5 }}>
                               <ListItemAvatar sx={{ minWidth: 36 }}>
-                                <Avatar sx={{ width: 24, height: 24, fontSize: "0.75rem" }}>
-                                  {voter.name[0]}
-                                </Avatar>
+                                <UserAvatar
+                                  userId={voter.id}
+                                  profileImageUrl={voter.profileImageUrl || voter.profileImage}
+                                  name={voter.name}
+                                  size={24}
+                                />
                               </ListItemAvatar>
                               <ListItemText
                                 primary={voter.name}
